@@ -15,6 +15,15 @@ add_library(pylon_julia_wrapper SHARED pylon_wrapper.cpp)
 
 target_link_libraries(pylon_julia_wrapper JlCxx::cxxwrap_julia)
 
+target_include_directories(pylon_julia_wrapper PRIVATE "${PYLON_INCLUDE_PATH};${PYLON_INCLUDE_PATH}/GenICam")
+
+find_library(pylonbase_library NAMES pylonbase PATHS ${PYLON_LIB_PATH})
+message(STATUS "Found pylonbase at ${pylonbase_library}")
+add_library(pylonbase SHARED IMPORTED)
+set_property(TARGET pylonbase PROPERTY IMPORTED_LOCATION ${pylonbase_library})
+
+target_link_libraries(pylon_julia_wrapper pylonbase)
+
 install(TARGETS
   pylon_julia_wrapper
 LIBRARY DESTINATION lib
