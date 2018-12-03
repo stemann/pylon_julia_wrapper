@@ -24,6 +24,11 @@ make
 ```
 
 ## Running samples
+Set dynamic/shared library loading path properly. On macOS:
+```
+export LD_LIBRARY_PATH=/Library/Frameworks/pylon.framework/Libraries
+```
+Execute sample:
 ```
 julia samples/init.jl
 ```

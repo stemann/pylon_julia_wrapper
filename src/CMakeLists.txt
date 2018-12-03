@@ -24,6 +24,13 @@ set_property(TARGET pylonbase PROPERTY IMPORTED_LOCATION ${pylonbase_library})
 
 target_link_libraries(pylon_julia_wrapper pylonbase)
 
+find_library(GCBase_library NAMES GCBase_gcc_v3_1_Basler_pylon_v5_1 GCBase_gcc_v3_0_Basler_pylon_v5_0 PATHS ${PYLON_LIB_PATH})
+message(STATUS "Found GCBase at ${GCBase_library}")
+add_library(GCBase SHARED IMPORTED)
+set_property(TARGET GCBase PROPERTY IMPORTED_LOCATION ${GCBase_library})
+
+target_link_libraries(pylon_julia_wrapper GCBase)
+
 install(TARGETS
   pylon_julia_wrapper
 LIBRARY DESTINATION lib

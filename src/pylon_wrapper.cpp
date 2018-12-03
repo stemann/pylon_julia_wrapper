@@ -15,4 +15,45 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
   module.method("get_pylon_version_string", &GetPylonVersionString);
   module.method("pylon_initialize", &PylonInitialize);
   module.method("pylon_terminate", &PylonTerminate);
+
+  module.add_type<CDeviceInfo>("DeviceInfo")
+    .method("get_vendor_name", [](CDeviceInfo& info)
+    {
+      return std::string(info.GetVendorName());
+    })
+    .method("get_model_name", [](CDeviceInfo& info)
+    {
+      return std::string(info.GetModelName());
+    })
+    .method("get_serial_number", [](CDeviceInfo& info)
+    {
+      return std::string(info.GetSerialNumber());
+    });
+
+  module.add_type<IDevice>("IDevice")
+    .method("get_device_info", &IDevice::GetDeviceInfo);
+
+  module.add_type<IPylonDevice>("IPylonDevice", jlcxx::julia_type<IDevice>());
+
+  module.add_type<CTlFactory>("TlFactory")
+    .method("get_transport_layer_factory_instance", &CTlFactory::GetInstance)
+    .method("create_first_device", [](CTlFactory& factory) -> IPylonDevice*
+    {
+      try
+      {
+        return factory.CreateFirstDevice();
+      }
+      catch (const GenericException & e)
+      {
+        throw std::runtime_error(e.GetDescription());
+      }
+    });
+}
+
+namespace jlcxx
+{
+  using namespace Pylon;
+
+  // Needed for shared pointer downcasting
+  template<> struct SuperType<IPylonDevice> { typedef IDevice type; };
 }
