@@ -30,12 +30,29 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
       return std::string(info.GetSerialNumber());
     });
 
+  module.add_type<CInstantCamera>("InstantCamera")
+    .constructor(false)
+    .constructor<IPylonDevice*>(false)
+    .constructor<IPylonDevice*, ECleanup>(false)
+    .method("attach", [](CInstantCamera& camera, IPylonDevice* device)
+    {
+      camera.Attach(device);
+    })
+    .method("attach", [](CInstantCamera& camera, IPylonDevice* device, ECleanup cleanup_procedure)
+    {
+      camera.Attach(device, cleanup_procedure);
+    });
+
   module.add_type<DeviceInfoList_t>("DeviceInfoList")
     .method("getindex", [](DeviceInfoList_t& list, long i)
     {
       return list[i - 1];
     })
     .method("length", &DeviceInfoList_t::size);
+
+  module.add_bits<ECleanup>("ECleanup");
+  module.set_const("Cleanup_None", Cleanup_None);
+  module.set_const("Cleanup_Delete", Cleanup_Delete);
 
   module.add_type<IDevice>("IDevice")
     .method("get_device_info", &IDevice::GetDeviceInfo);
@@ -80,4 +97,6 @@ namespace jlcxx
 
   // Needed for shared pointer downcasting
   template<> struct SuperType<IPylonDevice> { typedef IDevice type; };
+
+  template<> struct IsBits<ECleanup> : std::true_type {};
 }

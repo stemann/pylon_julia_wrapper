@@ -13,6 +13,7 @@ try
         serial_number = Wrapper.get_serial_number(device_info)
         println("$(vendor_name) $(model_name) $(serial_number)")
         device = Wrapper.create_device(transport_layer_factory, device_info)
+        camera = Wrapper.InstantCamera(device)
     end
 catch e
     println(e)
