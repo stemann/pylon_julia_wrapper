@@ -30,6 +30,13 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
       return std::string(info.GetSerialNumber());
     });
 
+  module.add_type<DeviceInfoList_t>("DeviceInfoList")
+    .method("getindex", [](DeviceInfoList_t& list, long i)
+    {
+      return list[i - 1];
+    })
+    .method("length", &DeviceInfoList_t::size);
+
   module.add_type<IDevice>("IDevice")
     .method("get_device_info", &IDevice::GetDeviceInfo);
 
@@ -47,6 +54,12 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
       {
         throw std::runtime_error(e.GetDescription());
       }
+    })
+    .method("enumerate_devices", [](CTlFactory& factory)
+    {
+      DeviceInfoList_t device_list;
+      factory.EnumerateDevices(device_list);
+      return device_list;
     });
 }
 
