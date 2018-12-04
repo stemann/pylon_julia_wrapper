@@ -44,6 +44,17 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
 
   module.add_type<CTlFactory>("TlFactory")
     .method("get_transport_layer_factory_instance", &CTlFactory::GetInstance)
+    .method("create_device", [](CTlFactory& factory, CDeviceInfo& device_info)
+    {
+      try
+      {
+        return factory.CreateDevice(device_info);
+      }
+      catch (const GenericException & e)
+      {
+        throw std::runtime_error(e.GetDescription());
+      }
+    })
     .method("create_first_device", [](CTlFactory& factory) -> IPylonDevice*
     {
       try
