@@ -8,6 +8,8 @@ module Wrapper
         @initcxx
     end
 
+    retrieve_result(camera::InstantCamera, timeoutMs::UInt32) = retrieve_result(camera, timeoutMs, TimeoutHandling_ThrowException)
+
     iterate(list::DeviceInfoList) = length(list) > 0 ? (list[1], 2) : nothing
     iterate(list::DeviceInfoList, i) = i <= length(list) ? (list[i], i+1) : nothing
     IteratorSize(list::DeviceInfoList) = length(list)

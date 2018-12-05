@@ -30,6 +30,36 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
       return std::string(info.GetSerialNumber());
     });
 
+  module.add_type<CGrabResultPtr>("GrabResultPtr")
+    .method("grab_succeeded", [](CGrabResultPtr grabResult)
+    {
+      return grabResult->GrabSucceeded();
+    })
+    .method("get_buffer", [](CGrabResultPtr grabResult)
+    {
+      return grabResult->GetBuffer();
+    })
+    .method("get_error_code", [](CGrabResultPtr grabResult)
+    {
+      return grabResult->GetErrorCode();
+    })
+    .method("get_error_description", [](CGrabResultPtr grabResult)
+    {
+      return grabResult->GetErrorDescription();
+    })
+    .method("get_height", [](CGrabResultPtr grabResult)
+    {
+      return grabResult->GetHeight();
+    })
+    .method("get_width", [](CGrabResultPtr grabResult)
+    {
+      return grabResult->GetWidth();
+    })
+    .method("release", [](CGrabResultPtr& grabResult)
+    {
+      return grabResult.Release();
+    });
+
   module.add_type<CInstantCamera>("InstantCamera")
     .constructor(false)
     .constructor<IPylonDevice*>(false)
@@ -41,6 +71,35 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
     .method("attach", [](CInstantCamera& camera, IPylonDevice* device, ECleanup cleanup_procedure)
     {
       camera.Attach(device, cleanup_procedure);
+    })
+    .method("is_grabbing", [](CInstantCamera& camera)
+    {
+      return camera.IsGrabbing();
+    })
+    .method("retrieve_result", [](CInstantCamera& camera, unsigned int timeoutMs, ETimeoutHandling timeoutHandling)
+    {
+      try
+      {
+        CGrabResultPtr grabResultPtr;
+        camera.RetrieveResult(timeoutMs, grabResultPtr, timeoutHandling);
+        return grabResultPtr;
+      }
+      catch (const GenericException & e)
+      {
+        throw std::runtime_error(e.GetDescription());
+      }
+    })
+    .method("start_grabbing", [](CInstantCamera& camera)
+    {
+      camera.StartGrabbing();
+    })
+    .method("start_grabbing", [](CInstantCamera& camera, size_t maxImages)
+    {
+      camera.StartGrabbing(maxImages);
+    })
+    .method("stop_grabbing", [](CInstantCamera& camera)
+    {
+      camera.StopGrabbing();
     });
 
   module.add_type<DeviceInfoList_t>("DeviceInfoList")
@@ -53,6 +112,10 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
   module.add_bits<ECleanup>("ECleanup");
   module.set_const("Cleanup_None", Cleanup_None);
   module.set_const("Cleanup_Delete", Cleanup_Delete);
+
+  module.add_bits<ETimeoutHandling>("ETimeoutHandling");
+  module.set_const("TimeoutHandling_Return", TimeoutHandling_Return);
+  module.set_const("TimeoutHandling_ThrowException", TimeoutHandling_ThrowException);
 
   module.add_type<IDevice>("IDevice")
     .method("get_device_info", &IDevice::GetDeviceInfo);
@@ -99,4 +162,5 @@ namespace jlcxx
   template<> struct SuperType<IPylonDevice> { typedef IDevice type; };
 
   template<> struct IsBits<ECleanup> : std::true_type {};
+  template<> struct IsBits<ETimeoutHandling> : std::true_type {};
 }
