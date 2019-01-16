@@ -5,6 +5,7 @@ Wrapper.pylon_initialize()
 transport_layer_factory = Wrapper.get_transport_layer_factory_instance()
 
 const images_to_grab = UInt64(100)
+const grab_result_retrieve_timeout_ms = UInt32(100)
 
 try
     device = Wrapper.create_first_device(transport_layer_factory)
@@ -16,7 +17,7 @@ try
     camera = Wrapper.InstantCamera(device)
     Wrapper.start_grabbing(camera, images_to_grab)
     while Wrapper.is_grabbing(camera)
-        grabResult = Wrapper.retrieve_result(camera, UInt32(1000))
+        grabResult = Wrapper.retrieve_result(camera, grab_result_retrieve_timeout_ms)
         if Wrapper.grab_succeeded(grabResult)
             width = Wrapper.get_width(grabResult)
             height = Wrapper.get_height(grabResult)

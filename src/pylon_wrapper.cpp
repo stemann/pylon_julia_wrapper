@@ -1,6 +1,31 @@
+#include <thread>
 #include "jlcxx/jlcxx.hpp"
+#include "jlcxx/functions.hpp"
 
 #include <pylon/PylonIncludes.h>
+
+namespace pylon_julia_wrapper
+{
+  using namespace Pylon;
+
+  void grab_result_waiter(CInstantCamera& camera, unsigned int timeout, int(*notify_async_cond)(void*), void* result_ready_cond)
+  {
+    auto grabResultReady = camera.GetGrabResultWaitObject();
+    while (camera.IsGrabbing())
+    {
+      try
+      {
+        auto res = grabResultReady.Wait(timeout);
+        notify_async_cond(result_ready_cond);
+      }
+      catch (const GenericException & e)
+      {
+        std::cout << "pylon_wrapper: Timeout while waiting for grab result: " << e.GetDescription() << std::endl;
+      }
+    }
+  }
+}
+
 
 JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
 {
@@ -96,6 +121,20 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
     .method("start_grabbing", [](CInstantCamera& camera, size_t maxImages)
     {
       camera.StartGrabbing(maxImages);
+    })
+    .method("start_grabbing_async", [](CInstantCamera& camera, unsigned int timeout, jlcxx::SafeCFunction safe_notify_async_cond, void* result_ready_cond)
+    {
+      auto notify_async_cond = jlcxx::make_function_pointer<int(void*)>(safe_notify_async_cond);
+      camera.StartGrabbing();
+      auto waiter_thread = new std::thread(pylon_julia_wrapper::grab_result_waiter, std::ref(camera), timeout, notify_async_cond, result_ready_cond);
+      return (void*)waiter_thread;
+    })
+    .method("start_grabbing_async", [](CInstantCamera& camera, size_t maxImages, unsigned int timeout, jlcxx::SafeCFunction safe_notify_async_cond, void* result_ready_cond)
+    {
+      auto notify_async_cond = jlcxx::make_function_pointer<int(void*)>(safe_notify_async_cond);
+      camera.StartGrabbing(maxImages);
+      auto waiter_thread = new std::thread(pylon_julia_wrapper::grab_result_waiter, std::ref(camera), timeout, notify_async_cond, result_ready_cond);
+      return (void*)waiter_thread;
     })
     .method("stop_grabbing", [](CInstantCamera& camera)
     {
