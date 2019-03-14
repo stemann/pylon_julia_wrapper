@@ -8,6 +8,9 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y usbutils cmake clang
 ENV PYLON_VERSION 5.1.0.12682
 ENV PYLON_SHA1SUM 2e051aa9e6470dc22eeb6069514c845f3dff4752
 
+#ENV PYLON_VERSION 5.2.0.13457
+#ENV PYLON_SHA1SUM 4886c00219226e7f3334bd580c8c37791422cc41
+
 WORKDIR /root
 RUN export TIME_LIMIT=`echo $(($(date +%s) + 24*60*60))` && curl https://www.baslerweb.com/fp-${TIME_LIMIT}/media/downloads/software/pylon_software/pylon_${PYLON_VERSION}-deb0_amd64.deb -O
 RUN echo "${PYLON_SHA1SUM} pylon_${PYLON_VERSION}-deb0_amd64.deb" | sha1sum -c

@@ -16,6 +16,8 @@ sources = [
 pylon_version = "5.1.0.12682"
 # pylon_sha1sum = "db866bea9d8a8273d8b85cc331fa77b95bae4c83"
 
+# pylon_version = "5.2.0.13457"
+
 basler_web_time_limit = round(Int, time()) + 24*60*60
 
 # Bash recipe for building across all platforms
