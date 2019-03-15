@@ -1,6 +1,13 @@
-# PylonJuliaWrapper
+# Pylon Julia Wrapper
 
 ## Building
+
+### BinaryBuilder
+```
+BINARYBUILDER_RUNNER=docker julia --color=yes build_tarballs.jl --verbose
+```
+
+### Local
 ```
 export CxxWrap_PATH=`julia --eval 'import CxxWrap; println(joinpath(dirname(pathof(CxxWrap)), ".."))'`
 
