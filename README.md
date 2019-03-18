@@ -1,5 +1,7 @@
 # Pylon Julia Wrapper
 
+[![Build Status](https://travis-ci.com/IHPSystems/pylon_julia_wrapper.svg?branch=master)](https://travis-ci.com/IHPSystems/pylon_julia_wrapper)
+
 ## Building
 
 ### BinaryBuilder
