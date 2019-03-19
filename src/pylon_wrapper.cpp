@@ -88,6 +88,14 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
     {
       return grabResult->GetHeight();
     })
+    .method("get_id", [](CGrabResultPtr grabResult)
+    {
+      return grabResult->GetID();
+    })
+    .method("get_image_number", [](CGrabResultPtr grabResult)
+    {
+      return grabResult->GetImageNumber();
+    })
     .method("get_image_size", [](CGrabResultPtr grabResult)
     {
       return grabResult->GetImageSize();
@@ -95,6 +103,10 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
     .method("get_pixel_type", [](CGrabResultPtr grabResult)
     {
       return (unsigned long)grabResult->GetPixelType();
+    })
+    .method("get_time_stamp", [](CGrabResultPtr grabResult)
+    {
+      return grabResult->GetTimeStamp();
     })
     .method("get_width", [](CGrabResultPtr grabResult)
     {
