@@ -34,7 +34,7 @@ export PYLON_LIB_PATH=/Library/Frameworks/pylon.framework/Libraries
 ```
 Build:
 ```
-export CxxWrap_PATH=`julia --eval 'import CxxWrap; println(joinpath(dirname(pathof(CxxWrap)), ".."))'`
+export CxxWrap_PATH=`julia --eval 'import Pkg; Pkg.activate("."); import CxxWrap; println(joinpath(dirname(pathof(CxxWrap)), ".."))'`
 
 mkdir -p build
 cd build
@@ -49,5 +49,5 @@ export LD_LIBRARY_PATH=/Library/Frameworks/pylon.framework/Libraries
 ```
 Execute sample:
 ```
-julia samples/init.jl
+julia --eval 'import Pkg; Pkg.activate("."); include("samples/init.jl")'
 ```
