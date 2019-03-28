@@ -24,12 +24,26 @@ set_property(TARGET pylonbase PROPERTY IMPORTED_LOCATION ${pylonbase_library})
 
 target_link_libraries(pylon_julia_wrapper pylonbase)
 
-find_library(GCBase_library NAMES GCBase_gcc_v3_1_Basler_pylon_v5_1 GCBase_gcc_v3_0_Basler_pylon_v5_0 PATHS ${PYLON_LIB_PATH})
+find_library(pylonutility_library NAMES pylonutility PATHS ${PYLON_LIB_PATH})
+message(STATUS "Found pylonutility at ${pylonutility_library}")
+add_library(pylonutility SHARED IMPORTED)
+set_property(TARGET pylonutility PROPERTY IMPORTED_LOCATION ${pylonutility_library})
+
+target_link_libraries(pylon_julia_wrapper pylonutility)
+
+find_library(GCBase_library NAMES GCBase_gcc_v3_1_Basler_pylon GCBase_gcc_v3_1_Basler_pylon_v5_1 GCBase_gcc_v3_0_Basler_pylon_v5_0 PATHS ${PYLON_LIB_PATH})
 message(STATUS "Found GCBase at ${GCBase_library}")
 add_library(GCBase SHARED IMPORTED)
 set_property(TARGET GCBase PROPERTY IMPORTED_LOCATION ${GCBase_library})
 
 target_link_libraries(pylon_julia_wrapper GCBase)
+
+find_library(GenApi_library NAMES GenApi_gcc_v3_1_Basler_pylon GenApi_gcc_v3_1_Basler_pylon_v5_1 GenApi_gcc_v3_0_Basler_pylon_v5_0 PATHS ${PYLON_LIB_PATH})
+message(STATUS "Found GenApi at ${GenApi_library}")
+add_library(GenApi SHARED IMPORTED)
+set_property(TARGET GenApi PROPERTY IMPORTED_LOCATION ${GenApi_library})
+
+target_link_libraries(pylon_julia_wrapper GenApi)
 
 install(TARGETS
   pylon_julia_wrapper
