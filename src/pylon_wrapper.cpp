@@ -53,6 +53,30 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
     return IsBGR((EPixelType)pixelType);
   });
 
+  // CFeaturePersistence
+  module.method("load", [](const char *filename, void *nodeMap)
+  {
+    try
+    {
+      CFeaturePersistence::Load(filename, (GenApi::INodeMap*)nodeMap);
+    }
+    catch (const GenericException & e)
+    {
+      throw std::runtime_error(e.GetDescription());
+    }
+  });
+  module.method("save", [](const char *filename, void *nodeMap)
+  {
+    try
+    {
+      CFeaturePersistence::Save(filename, (GenApi::INodeMap*)nodeMap);
+    }
+    catch (const GenericException & e)
+    {
+      throw std::runtime_error(e.GetDescription());
+    }
+  });
+
   module.add_type<CDeviceInfo>("DeviceInfo")
     .method("get_vendor_name", [](CDeviceInfo& info)
     {
@@ -125,13 +149,24 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
     {
       camera.Attach(device);
     })
-    .method("attach", [](CInstantCamera& camera, IPylonDevice* device, ECleanup cleanup_procedure)
+    .method("attach", [](CInstantCamera& camera, IPylonDevice* device, ECleanup cleanupProcedure)
     {
-      camera.Attach(device, cleanup_procedure);
+      camera.Attach(device, cleanupProcedure);
     })
     .method("close", [](CInstantCamera& camera)
     {
       camera.Close();
+    })
+    .method("get_node_map", [](CInstantCamera& camera)
+    {
+      try
+      {
+        return (void*)&(camera.GetNodeMap());
+      }
+      catch (const GenericException & e)
+      {
+        throw std::runtime_error(e.GetDescription());
+      }
     })
     .method("is_grabbing", [](CInstantCamera& camera)
     {
@@ -148,6 +183,17 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
     .method("open", [](CInstantCamera& camera)
     {
       camera.Open();
+    })
+    .method("register_configuration", [](CInstantCamera& camera, void *configurator, ERegistrationMode registrationMode, ECleanup cleanupProcedure)
+    {
+      try
+      {
+        camera.RegisterConfiguration((CConfigurationEventHandler*)configurator, registrationMode, cleanupProcedure);
+      }
+      catch (const GenericException & e)
+      {
+        throw std::runtime_error(e.GetDescription());
+      }
     })
     .method("retrieve_result", [](CInstantCamera& camera, unsigned int timeoutMs, ETimeoutHandling timeoutHandling)
     {
@@ -264,6 +310,10 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
   module.set_const("PixelType_RGB12V1packed", PixelType_RGB12V1packed);
   module.set_const("PixelType_Double", PixelType_Double);
 
+  module.add_bits<ERegistrationMode>("ERegistrationMode");
+  module.set_const("RegistrationMode_Append", RegistrationMode_Append);
+  module.set_const("RegistrationMode_ReplaceAll", RegistrationMode_ReplaceAll);
+
   module.add_bits<ETimeoutHandling>("ETimeoutHandling");
   module.set_const("TimeoutHandling_Return", TimeoutHandling_Return);
   module.set_const("TimeoutHandling_ThrowException", TimeoutHandling_ThrowException);
@@ -314,5 +364,6 @@ namespace jlcxx
 
   template<> struct IsBits<ECleanup> : std::true_type {};
   template<> struct IsBits<EPixelType> : std::true_type {};
+  template<> struct IsBits<ERegistrationMode> : std::true_type {};
   template<> struct IsBits<ETimeoutHandling> : std::true_type {};
 }
