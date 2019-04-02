@@ -20,7 +20,7 @@ try
     @info "Getting camera node map"
     node_map = Wrapper.get_node_map(camera)
     @info "Saving node map to $filename"
-    Wrapper.save(filename, node_map)
+    Wrapper.save_features(filename, node_map)
     @info "Closing camera"
     Wrapper.close(camera)
 
@@ -31,7 +31,7 @@ try
     @info "Opening camera"
     Wrapper.open(camera)
     @info "Loading node map from $filename"
-    Wrapper.load(filename, node_map)
+    Wrapper.load_features(filename, node_map)
     @info "Closing camera"
     Wrapper.close(camera)
 catch e

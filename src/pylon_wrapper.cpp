@@ -54,7 +54,7 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
   });
 
   // CFeaturePersistence
-  module.method("load", [](const char *filename, void *nodeMap)
+  module.method("load_features", [](const char *filename, void *nodeMap)
   {
     try
     {
@@ -65,7 +65,7 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
       throw std::runtime_error(e.GetDescription());
     }
   });
-  module.method("save", [](const char *filename, void *nodeMap)
+  module.method("save_features", [](const char *filename, void *nodeMap)
   {
     try
     {
@@ -171,6 +171,10 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
     .method("is_grabbing", [](CInstantCamera& camera)
     {
       return camera.IsGrabbing();
+    })
+    .method("is_open", [](CInstantCamera& camera)
+    {
+      return camera.IsOpen();
     })
     .method("max_num_buffer", [](CInstantCamera& camera)
     {
