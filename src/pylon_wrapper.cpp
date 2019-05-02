@@ -1,6 +1,7 @@
 #include <thread>
 #include "jlcxx/jlcxx.hpp"
 #include "jlcxx/functions.hpp"
+#include "uv.h"
 
 #include <pylon/PylonIncludes.h>
 
@@ -8,11 +9,14 @@ namespace pylon_julia_wrapper
 {
   using namespace Pylon;
 
-  void grab_result_waiter(CInstantCamera& camera, unsigned int timeout, int(*notify_async_cond)(void*), void* result_ready_cond)
+  void grab_result_waiter(CInstantCamera& camera, unsigned int timeout,
+    int(*notify_async_cond)(void*), void* result_ready_cond,
+    uv_mutex_t *result_wait_mutex)
   {
     auto grabResultReady = camera.GetGrabResultWaitObject();
     while (camera.IsGrabbing())
     {
+      uv_mutex_lock(result_wait_mutex);
       try
       {
         auto res = grabResultReady.Wait(timeout);
@@ -22,6 +26,7 @@ namespace pylon_julia_wrapper
       {
         std::cout << "pylon_wrapper: Timeout while waiting for grab result: " << e.GetDescription() << std::endl;
       }
+      uv_mutex_unlock(result_wait_mutex);
     }
   }
 }
@@ -220,18 +225,24 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
     {
       camera.StartGrabbing(maxImages);
     })
-    .method("start_grabbing_async", [](CInstantCamera& camera, unsigned int timeout, jlcxx::SafeCFunction safe_notify_async_cond, void* result_ready_cond)
+    .method("start_grabbing_async", [](CInstantCamera& camera, unsigned int timeout, jlcxx::SafeCFunction safe_notify_async_cond, void* result_ready_cond, void* result_wait_mutex)
     {
       auto notify_async_cond = jlcxx::make_function_pointer<int(void*)>(safe_notify_async_cond);
       camera.StartGrabbing();
-      auto waiter_thread = new std::thread(pylon_julia_wrapper::grab_result_waiter, std::ref(camera), timeout, notify_async_cond, result_ready_cond);
+      auto waiter_thread = new std::thread(pylon_julia_wrapper::grab_result_waiter,
+        std::ref(camera), timeout,
+        notify_async_cond, result_ready_cond,
+        (uv_mutex_t*)result_wait_mutex);
       return (void*)waiter_thread;
     })
-    .method("start_grabbing_async", [](CInstantCamera& camera, size_t maxImages, unsigned int timeout, jlcxx::SafeCFunction safe_notify_async_cond, void* result_ready_cond)
+    .method("start_grabbing_async", [](CInstantCamera& camera, size_t maxImages, unsigned int timeout, jlcxx::SafeCFunction safe_notify_async_cond, void* result_ready_cond, void* result_wait_mutex)
     {
       auto notify_async_cond = jlcxx::make_function_pointer<int(void*)>(safe_notify_async_cond);
       camera.StartGrabbing(maxImages);
-      auto waiter_thread = new std::thread(pylon_julia_wrapper::grab_result_waiter, std::ref(camera), timeout, notify_async_cond, result_ready_cond);
+      auto waiter_thread = new std::thread(pylon_julia_wrapper::grab_result_waiter,
+        std::ref(camera), timeout,
+        notify_async_cond, result_ready_cond,
+        (uv_mutex_t*)result_wait_mutex);
       return (void*)waiter_thread;
     })
     .method("stop_grabbing", [](CInstantCamera& camera)
