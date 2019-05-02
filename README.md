@@ -4,7 +4,7 @@
 
 ## BinaryBuilder
 ```
-BINARYBUILDER_RUNNER=docker julia --color=yes build_tarballs.jl --verbose
+BINARYBUILDER_RUNNER=docker BINARYBUILDER_AUTOMATIC_APPLE=true julia --color=yes build_tarballs.jl --verbose
 ```
 
 ## Docker
