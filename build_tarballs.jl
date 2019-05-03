@@ -14,9 +14,12 @@ sources = [
 ]
 
 pylon_version = "5.1.0.12682"
-# pylon_sha1sum = "db866bea9d8a8273d8b85cc331fa77b95bae4c83"
+pylon_sha1sum = "db866bea9d8a8273d8b85cc331fa77b95bae4c83"
 
 # pylon_version = "5.2.0.13457"
+
+pylon_macos_version = "5.1.1.13069"
+pylon_macos_sha1sum = "140234a603b5a8b0b9ff0aa725dcaedbdff2908d"
 
 basler_web_time_limit = round(Int, time()) + 24*60*60
 
@@ -26,14 +29,32 @@ cd \$WORKSPACE/srcdir
 
 mkdir downloads && cd downloads
 
-curl https://www.baslerweb.com/fp-$basler_web_time_limit/media/downloads/software/pylon_software/pylon-$pylon_version-x86_64.tar.gz -O
-tar xfz pylon-$pylon_version-x86_64.tar.gz
-cd pylon-$pylon_version-x86_64
-tar xfz pylonSDK*.tar.gz
-cd ../..
+if [[ \${target} == *linux* ]]; then
+    curl https://www.baslerweb.com/fp-$basler_web_time_limit/media/downloads/software/pylon_software/pylon-$pylon_version-x86_64.tar.gz -O
+    echo "$pylon_sha1sum  pylon-$pylon_version-x86_64.tar.gz" | sha1sum -c -w
+    tar xfz pylon-$pylon_version-x86_64.tar.gz
+    cd pylon-$pylon_version-x86_64
+    tar xfz pylonSDK*.tar.gz
 
-export PYLON_INCLUDE_PATH=\$WORKSPACE/srcdir/downloads/pylon-$pylon_version-x86_64/pylon5/include
-export PYLON_LIB_PATH=\$WORKSPACE/srcdir/downloads/pylon-$pylon_version-x86_64/pylon5/lib64
+    export PYLON_INCLUDE_PATH=\$WORKSPACE/srcdir/downloads/pylon-$pylon_version-x86_64/pylon5/include
+    export PYLON_LIB_PATH=\$WORKSPACE/srcdir/downloads/pylon-$pylon_version-x86_64/pylon5/lib64
+elif [[ \${target} == *apple* ]]; then
+    curl https://www.baslerweb.com/fp-$basler_web_time_limit/media/downloads/software/pylon_software/pylon-$pylon_macos_version.dmg -O
+    echo "$pylon_macos_sha1sum  pylon-$pylon_macos_version.dmg" | sha1sum -c -w
+    apk update && apk add p7zip && apk add libarchive-tools
+    7z x pylon-$pylon_macos_version.dmg
+    mv \"pylon 5 Camera Software Suite\" pylon-$(pylon_macos_version)
+    cd pylon-$(pylon_macos_version)
+    7z x pylon-$pylon_macos_version.pkg
+    gunzip -c pylonsdk.pkg/Payload | bsdcpio -i --no-preserve-owner
+    mkdir include
+    mv Library/Frameworks/pylon.framework/Versions/A/Headers include/pylon
+    mv include/pylon/GenICam/* include/
+
+    export PYLON_INCLUDE_PATH=\$WORKSPACE/srcdir/downloads/pylon-$pylon_macos_version/include
+    export PYLON_LIB_PATH=\$WORKSPACE/srcdir/downloads/pylon-$pylon_macos_version/Library/Frameworks/pylon.framework/Libraries
+fi
+cd ../..
 
 mkdir build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/opt/\$target/\$target.toolchain -DCMAKE_CXX_FLAGS="-march=x86-64" -DCMAKE_INSTALL_PREFIX=\$prefix -DCMAKE_FIND_ROOT_PATH=\$prefix -DJulia_PREFIX=\$prefix -DPYLON_INCLUDE_PATH=\${PYLON_INCLUDE_PATH} -DPYLON_LIB_PATH=\${PYLON_LIB_PATH} ..
@@ -53,7 +74,7 @@ let p = Linux # Windows
         end
     end
 end
-# push!(platforms, MacOS(:x86_64))
+push!(platforms, MacOS(:x86_64))
 
 # The products that we will ensure are always built
 products(prefix) = [
