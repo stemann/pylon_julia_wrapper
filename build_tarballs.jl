@@ -14,11 +14,12 @@ sources = [
 ]
 
 pylon_version = "5.1.0.12682"
-# pylon_sha1sum = "db866bea9d8a8273d8b85cc331fa77b95bae4c83"
+pylon_sha1sum = "db866bea9d8a8273d8b85cc331fa77b95bae4c83"
 
 # pylon_version = "5.2.0.13457"
 
 pylon_macos_version = "5.1.1.13069"
+pylon_macos_sha1sum = "140234a603b5a8b0b9ff0aa725dcaedbdff2908d"
 
 basler_web_time_limit = round(Int, time()) + 24*60*60
 
@@ -30,6 +31,7 @@ mkdir downloads && cd downloads
 
 if [[ \${target} == *linux* ]]; then
     curl https://www.baslerweb.com/fp-$basler_web_time_limit/media/downloads/software/pylon_software/pylon-$pylon_version-x86_64.tar.gz -O
+    echo "$pylon_sha1sum  pylon-$pylon_version-x86_64.tar.gz" | sha1sum -c -w
     tar xfz pylon-$pylon_version-x86_64.tar.gz
     cd pylon-$pylon_version-x86_64
     tar xfz pylonSDK*.tar.gz
@@ -38,6 +40,7 @@ if [[ \${target} == *linux* ]]; then
     export PYLON_LIB_PATH=\$WORKSPACE/srcdir/downloads/pylon-$pylon_version-x86_64/pylon5/lib64
 elif [[ \${target} == *apple* ]]; then
     curl https://www.baslerweb.com/fp-$basler_web_time_limit/media/downloads/software/pylon_software/pylon-$pylon_macos_version.dmg -O
+    echo "$pylon_macos_sha1sum  pylon-$pylon_macos_version.dmg" | sha1sum -c -w
     apk update && apk add p7zip && apk add libarchive-tools
     7z x pylon-$pylon_macos_version.dmg
     mv \"pylon 5 Camera Software Suite\" pylon-$(pylon_macos_version)
