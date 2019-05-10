@@ -10,17 +10,26 @@ namespace pylon_julia_wrapper
   using namespace Pylon;
 
   void grab_result_waiter(CInstantCamera& camera, unsigned int timeout,
-    int(*notify_async_cond)(void*), void* result_ready_cond,
-    uv_mutex_t *result_wait_mutex)
+    uv_async_t* result_ready_handle, uv_mutex_t *result_wait_mutex)
   {
-    auto grabResultReady = camera.GetGrabResultWaitObject();
+    auto grabResultReadyWaitObject = camera.GetGrabResultWaitObject();
     while (camera.IsGrabbing())
     {
       uv_mutex_lock(result_wait_mutex);
+      if (!camera.IsGrabbing())
+      {
+        uv_mutex_unlock(result_wait_mutex);
+        break;
+      }
       try
       {
-        auto res = grabResultReady.Wait(timeout);
-        notify_async_cond(result_ready_cond);
+        auto resultReady = grabResultReadyWaitObject.Wait(timeout);
+        if (!resultReady)
+        {
+          uv_mutex_unlock(result_wait_mutex);
+          continue;
+        }
+        uv_async_send(result_ready_handle);
       }
       catch (const GenericException & e)
       {
@@ -225,29 +234,23 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
     {
       camera.StartGrabbing(maxImages);
     })
-    .method("start_grabbing_async", [](CInstantCamera& camera, unsigned int timeout, jlcxx::SafeCFunction safe_notify_async_cond, void* result_ready_cond, void* result_wait_mutex)
+    .method("start_grab_result_waiter", [](CInstantCamera& camera, unsigned int timeout, void* result_ready_handle, void* result_wait_mutex)
     {
-      auto notify_async_cond = jlcxx::make_function_pointer<int(void*)>(safe_notify_async_cond);
-      camera.StartGrabbing();
       auto waiter_thread = new std::thread(pylon_julia_wrapper::grab_result_waiter,
         std::ref(camera), timeout,
-        notify_async_cond, result_ready_cond,
-        (uv_mutex_t*)result_wait_mutex);
-      return (void*)waiter_thread;
-    })
-    .method("start_grabbing_async", [](CInstantCamera& camera, size_t maxImages, unsigned int timeout, jlcxx::SafeCFunction safe_notify_async_cond, void* result_ready_cond, void* result_wait_mutex)
-    {
-      auto notify_async_cond = jlcxx::make_function_pointer<int(void*)>(safe_notify_async_cond);
-      camera.StartGrabbing(maxImages);
-      auto waiter_thread = new std::thread(pylon_julia_wrapper::grab_result_waiter,
-        std::ref(camera), timeout,
-        notify_async_cond, result_ready_cond,
-        (uv_mutex_t*)result_wait_mutex);
+        (uv_async_t*)result_ready_handle, (uv_mutex_t*)result_wait_mutex);
       return (void*)waiter_thread;
     })
     .method("stop_grabbing", [](CInstantCamera& camera)
     {
       camera.StopGrabbing();
+    })
+    .method("stop_grabbing", [](CInstantCamera& camera, void* grab_result_waiter, void* result_wait_mutex)
+    {
+      camera.StopGrabbing();
+      uv_mutex_unlock((uv_mutex_t*)result_wait_mutex);
+      auto grab_result_waiter_thread = (std::thread*)grab_result_waiter;
+      grab_result_waiter_thread->join();
     });
 
   module.add_type<DeviceInfoList_t>("DeviceInfoList")
