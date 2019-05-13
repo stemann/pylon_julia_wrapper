@@ -5,19 +5,27 @@ Wrapper.pylon_initialize()
 transport_layer_factory = Wrapper.get_transport_layer_factory_instance()
 
 const images_to_grab = UInt64(100)
-const grab_result_wait_timeout_ms = UInt32(100)
+const grab_result_wait_timeout_ms = UInt32(500)
 const grab_result_retrieve_timeout_ms = UInt32(1)
 
 function acquire_async(camera)
     time_waited = 0.0
     time_retrieved = 0.0
     time_slept = 0.0
+    terminate_waiter_event = Wrapper.create_wait_object_ex(false)
+    initiate_wait_event = Wrapper.create_wait_object_ex(false)
     result_ready_cond = Base.AsyncCondition()
-    Wrapper.start_grabbing_async(camera, images_to_grab, grab_result_wait_timeout_ms, Wrapper.notify_async_cond_safe_c, result_ready_cond.handle)
+    grab_result_waiter = Wrapper.start_grab_result_waiter(camera,
+        grab_result_wait_timeout_ms,
+        result_ready_cond.handle,
+        terminate_waiter_event,
+        initiate_wait_event)
+    Wrapper.start_grabbing(camera, images_to_grab)
     @sync begin
         @async begin
             while Wrapper.is_grabbing(camera)
                 t1 = time_ns()
+                Wrapper.signal(initiate_wait_event)
                 wait(result_ready_cond)
                 t2 = time_ns()
                 time_waited += (t2 - t1) / 1e9
@@ -26,9 +34,11 @@ function acquire_async(camera)
                 t2 = time_ns()
                 time_retrieved += (t2 - t1) / 1e9
                 if Wrapper.grab_succeeded(grabResult)
+                    id = Wrapper.get_id(grabResult)
+                    time_stamp = Wrapper.get_time_stamp(grabResult)
                     width = Wrapper.get_width(grabResult)
                     height = Wrapper.get_height(grabResult)
-                    print("Size: $(width) x $(height) : ")
+                    print("Image $id @ $time_stamp with size: $(width) x $(height) : ")
                     buffer = Wrapper.get_buffer(grabResult)
                     buffer_array = unsafe_wrap(Array, Ptr{UInt8}(buffer), (width, height))
                     @show buffer_array[1, 1]
@@ -46,6 +56,7 @@ function acquire_async(camera)
             end
         end
     end
+    Wrapper.stop_grab_result_waiter(grab_result_waiter, terminate_waiter_event)
     Wrapper.stop_grabbing(camera)
     println("Time spent waiting (non-blocking): $(time_waited) secs, mean $(time_waited/images_to_grab)")
     println("Time spent retrieving (blocking): $(time_retrieved) secs, mean $(time_retrieved/images_to_grab)")

@@ -5,7 +5,7 @@ Wrapper.pylon_initialize()
 transport_layer_factory = Wrapper.get_transport_layer_factory_instance()
 
 const images_to_grab = UInt64(100)
-const grab_result_retrieve_timeout_ms = UInt32(100)
+const grab_result_retrieve_timeout_ms = UInt32(500)
 
 try
     device = Wrapper.create_first_device(transport_layer_factory)
@@ -19,9 +19,11 @@ try
     while Wrapper.is_grabbing(camera)
         grabResult = Wrapper.retrieve_result(camera, grab_result_retrieve_timeout_ms)
         if Wrapper.grab_succeeded(grabResult)
+            id = Wrapper.get_id(grabResult)
+            time_stamp = Wrapper.get_time_stamp(grabResult)
             width = Wrapper.get_width(grabResult)
             height = Wrapper.get_height(grabResult)
-            println("Size: $(width) x $(height)")
+            print("Image $id @ $time_stamp with size: $(width) x $(height) : ")
             buffer = Wrapper.get_buffer(grabResult)
             buffer_array = unsafe_wrap(Array, Ptr{UInt8}(buffer), (width, height))
             @show buffer_array[1, 1]
