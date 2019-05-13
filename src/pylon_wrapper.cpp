@@ -10,32 +10,61 @@ namespace pylon_julia_wrapper
   using namespace Pylon;
 
   void grab_result_waiter(CInstantCamera& camera, unsigned int timeout,
-    uv_async_t* result_ready_handle, uv_mutex_t *result_wait_mutex)
+    uv_async_t* result_ready_handle,
+    WaitObjectEx& terminate_waiter_event,
+    WaitObjectEx& initiate_wait_event)
   {
-    auto grabResultReadyWaitObject = camera.GetGrabResultWaitObject();
-    while (camera.IsGrabbing())
+    auto result_ready_event = camera.GetGrabResultWaitObject();
+
+    WaitObjects control_events;
+    control_events.Add(terminate_waiter_event);
+    control_events.Add(initiate_wait_event);
+
+    WaitObjects result_events;
+    result_events.Add(terminate_waiter_event);
+    result_events.Add(result_ready_event);
+
+    unsigned int event_index;
+
+    bool terminate = false;
+    while (!terminate)
     {
-      uv_mutex_lock(result_wait_mutex);
-      if (!camera.IsGrabbing())
+      if (!control_events.WaitForAny(INFINITE, &event_index))
       {
-        uv_mutex_unlock(result_wait_mutex);
+        std::cout << "pylon_wrapper: Timeout while waiting for termination or initiation" << std::endl;
         break;
       }
-      try
+
+      switch (event_index)
       {
-        auto resultReady = grabResultReadyWaitObject.Wait(timeout);
-        if (!resultReady)
+        case 0: // terminate_waiter_event
         {
-          uv_mutex_unlock(result_wait_mutex);
-          continue;
+          terminate = true;
+          break;
         }
-        uv_async_send(result_ready_handle);
+        case 1: // initiate_wait_event
+        {
+          if (!result_events.WaitForAny(timeout, &event_index))
+          {
+            std::cout << "pylon_wrapper: Timeout while waiting for grab result" << std::endl;
+            break;
+          }
+
+          switch (event_index)
+          {
+            case 0: // terminate_waiter_event
+            {
+              terminate = true;
+              break;
+            }
+            case 1: // result_ready_event
+            {
+              uv_async_send(result_ready_handle);
+              break;
+            }
+          }
+        }
       }
-      catch (const GenericException & e)
-      {
-        std::cout << "pylon_wrapper: Timeout while waiting for grab result: " << e.GetDescription() << std::endl;
-      }
-      uv_mutex_unlock(result_wait_mutex);
     }
   }
 }
@@ -234,24 +263,30 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
     {
       camera.StartGrabbing(maxImages);
     })
-    .method("start_grab_result_waiter", [](CInstantCamera& camera, unsigned int timeout, void* result_ready_handle, void* result_wait_mutex)
+    .method("start_grab_result_waiter", [](CInstantCamera& camera, unsigned int timeout,
+      void* result_ready_handle,
+      WaitObjectEx& terminate_waiter_event,
+      WaitObjectEx& initiate_wait_event)
     {
       auto waiter_thread = new std::thread(pylon_julia_wrapper::grab_result_waiter,
         std::ref(camera), timeout,
-        (uv_async_t*)result_ready_handle, (uv_mutex_t*)result_wait_mutex);
+        (uv_async_t*)result_ready_handle,
+        std::ref(terminate_waiter_event),
+        std::ref(initiate_wait_event));
       return (void*)waiter_thread;
     })
     .method("stop_grabbing", [](CInstantCamera& camera)
     {
       camera.StopGrabbing();
-    })
-    .method("stop_grabbing", [](CInstantCamera& camera, void* grab_result_waiter, void* result_wait_mutex)
-    {
-      camera.StopGrabbing();
-      uv_mutex_unlock((uv_mutex_t*)result_wait_mutex);
-      auto grab_result_waiter_thread = (std::thread*)grab_result_waiter;
-      grab_result_waiter_thread->join();
     });
+
+  module.method("stop_grab_result_waiter", [](void* grab_result_waiter,
+    WaitObjectEx& terminate_waiter_event)
+  {
+    terminate_waiter_event.Signal();
+    auto grab_result_waiter_thread = (std::thread*)grab_result_waiter;
+    grab_result_waiter_thread->join();
+  });
 
   module.add_type<DeviceInfoList_t>("DeviceInfoList")
     .method("getindex", [](DeviceInfoList_t& list, long i)
@@ -371,6 +406,12 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
       factory.EnumerateDevices(device_list);
       return device_list;
     });
+
+  module.add_type<WaitObjectEx>("WaitObjectEx")
+    .method("create_wait_object_ex", &WaitObjectEx::Create)
+    .method("reset", &WaitObjectEx::Reset)
+    .method("signal", &WaitObjectEx::Signal)
+    .method("wait", &WaitObjectEx::Wait);
 }
 
 namespace jlcxx

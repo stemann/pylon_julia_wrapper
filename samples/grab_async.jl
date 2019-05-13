@@ -12,21 +12,21 @@ function acquire_async(camera)
     time_waited = 0.0
     time_retrieved = 0.0
     time_slept = 0.0
-    result_wait_mutex = Threads.Mutex()
-    lock(result_wait_mutex)
+    terminate_waiter_event = Wrapper.create_wait_object_ex(false)
+    initiate_wait_event = Wrapper.create_wait_object_ex(false)
     result_ready_cond = Base.AsyncCondition()
-    Wrapper.start_grabbing(camera, images_to_grab)
     grab_result_waiter = Wrapper.start_grab_result_waiter(camera,
         grab_result_wait_timeout_ms,
         result_ready_cond.handle,
-        Base.unsafe_convert(Ptr{Nothing}, result_wait_mutex))
+        terminate_waiter_event,
+        initiate_wait_event)
+    Wrapper.start_grabbing(camera, images_to_grab)
     @sync begin
         @async begin
             while Wrapper.is_grabbing(camera)
                 t1 = time_ns()
-                unlock(result_wait_mutex)
+                Wrapper.signal(initiate_wait_event)
                 wait(result_ready_cond)
-                lock(result_wait_mutex)
                 t2 = time_ns()
                 time_waited += (t2 - t1) / 1e9
                 t1 = time_ns()
@@ -56,7 +56,8 @@ function acquire_async(camera)
             end
         end
     end
-    Wrapper.stop_grabbing(camera, grab_result_waiter, Base.unsafe_convert(Ptr{Nothing}, result_wait_mutex))
+    Wrapper.stop_grab_result_waiter(grab_result_waiter, terminate_waiter_event)
+    Wrapper.stop_grabbing(camera)
     println("Time spent waiting (non-blocking): $(time_waited) secs, mean $(time_waited/images_to_grab)")
     println("Time spent retrieving (blocking): $(time_retrieved) secs, mean $(time_retrieved/images_to_grab)")
     println("Time usable for other tasks: $(time_slept) secs, mean $(time_slept/images_to_grab) secs")
