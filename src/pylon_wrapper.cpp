@@ -26,8 +26,7 @@ namespace pylon_julia_wrapper
 
     unsigned int event_index;
 
-    bool terminate = false;
-    while (!terminate)
+    while (true)
     {
       if (!control_events.WaitForAny(INFINITE, &event_index))
       {
@@ -35,36 +34,21 @@ namespace pylon_julia_wrapper
         break;
       }
 
-      switch (event_index)
-      {
-        case 0: // terminate_waiter_event
-        {
-          terminate = true;
-          break;
-        }
-        case 1: // initiate_wait_event
-        {
-          if (!result_events.WaitForAny(timeout, &event_index))
-          {
-            std::cout << "pylon_wrapper: Timeout while waiting for grab result" << std::endl;
-            break;
-          }
+      if (event_index == 0) // terminate_waiter_event
+        break;
 
-          switch (event_index)
-          {
-            case 0: // terminate_waiter_event
-            {
-              terminate = true;
-              break;
-            }
-            case 1: // result_ready_event
-            {
-              uv_async_send(result_ready_handle);
-              break;
-            }
-          }
-        }
+      // initiate_wait_event
+      if (!result_events.WaitForAny(timeout, &event_index))
+      {
+        std::cout << "pylon_wrapper: Timeout while waiting for grab result" << std::endl;
+        continue;
       }
+
+      if (event_index == 0) // terminate_waiter_event
+        break;
+
+      // result_ready_event
+      uv_async_send(result_ready_handle);
     }
   }
 }
