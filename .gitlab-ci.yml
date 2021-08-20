@@ -1,5 +1,7 @@
-stages:
-  - build
+include:
+  - project: 'ihp/julia/julia-gitlab-ci-templates'
+    ref: v1.0.0
+    file: '/.gitlab-ci_template.yaml'
 
 build_container:
   stage: build
@@ -10,3 +12,26 @@ build_container:
     - mkdir -p /kaniko/.docker
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY_IMAGE:latest --no-push
+
+.install_pylon:
+  before_script:
+    - source src/install_pylon.sh
+
+build:1.0:
+  stage: build
+  extends:
+    - .julia:1.0
+    - .install_pylon
+  script:
+    - bash src/build.sh
+  artifacts:
+    paths:
+      - build/lib/libpylon_julia_wrapper.so
+
+test:1.0:
+  needs:
+    - build:1.0
+  extends:
+    - .julia:1.0
+    - .install_pylon
+    - .julia.test
