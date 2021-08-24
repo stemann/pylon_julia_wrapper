@@ -1,4 +1,4 @@
-module Wrapper
+module PylonWrapper
     import Base: iterate, IteratorSize, length
 
     using CxxWrap

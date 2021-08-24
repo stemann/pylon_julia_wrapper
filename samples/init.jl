@@ -1,6 +1,6 @@
-include(joinpath("..", "src", "wrapper.jl"))
+using PylonWrapper
 
-@show Wrapper.get_pylon_version()
-@show Wrapper.get_pylon_version_string()
-@show Wrapper.pylon_initialize()
-@show Wrapper.pylon_terminate(true)
+@show PylonWrapper.get_pylon_version()
+@show PylonWrapper.get_pylon_version_string()
+@show PylonWrapper.pylon_initialize()
+@show PylonWrapper.pylon_terminate(true)

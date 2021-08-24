@@ -1,0 +1,8 @@
+{
+  "dockerFile": "../Dockerfile",
+  "extensions": [
+      "julialang.language-julia",
+      "ms-vscode.cmake-tools",
+      "ms-vscode.cpptools"
+    ]
+}

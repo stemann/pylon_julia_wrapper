@@ -1,41 +1,41 @@
-include(joinpath("..", "src", "wrapper.jl"))
+include(joinpath("..", "src", "PylonWrapper.jl"))
 
-Wrapper.pylon_initialize()
+PylonWrapper.pylon_initialize()
 
-transport_layer_factory = Wrapper.get_transport_layer_factory_instance()
+transport_layer_factory = PylonWrapper.get_transport_layer_factory_instance()
 
 filename = tempname() * ".pfs"
 
 try
-    device = Wrapper.create_first_device(transport_layer_factory)
-    device_info = Wrapper.get_device_info(device)
-    vendor_name = Wrapper.get_vendor_name(device_info)
-    model_name = Wrapper.get_model_name(device_info)
-    serial_number = Wrapper.get_serial_number(device_info)
+    device = PylonWrapper.create_first_device(transport_layer_factory)
+    device_info = PylonWrapper.get_device_info(device)
+    vendor_name = PylonWrapper.get_vendor_name(device_info)
+    model_name = PylonWrapper.get_model_name(device_info)
+    serial_number = PylonWrapper.get_serial_number(device_info)
     @info "Found $(vendor_name) $(model_name) $(serial_number)"
     @info "Creating camera instance"
-    camera = Wrapper.InstantCamera(device)
+    camera = PylonWrapper.InstantCamera(device)
     @info "Opening camera"
-    Wrapper.open(camera)
+    PylonWrapper.open(camera)
     @info "Getting camera node map"
-    node_map = Wrapper.get_node_map(camera)
+    node_map = PylonWrapper.get_node_map(camera)
     @info "Saving node map to $filename"
-    Wrapper.save_features(filename, node_map)
+    PylonWrapper.save_features(filename, node_map)
     @info "Closing camera"
-    Wrapper.close(camera)
+    PylonWrapper.close(camera)
 
     @info "Creating camera instance"
-    camera = Wrapper.InstantCamera(device)
+    camera = PylonWrapper.InstantCamera(device)
     @info "Removing default configuration from instance"
-    Wrapper.register_configuration(camera, C_NULL, Wrapper.RegistrationMode_ReplaceAll, Wrapper.Cleanup_None)
+    PylonWrapper.register_configuration(camera, C_NULL, PylonWrapper.RegistrationMode_ReplaceAll, PylonWrapper.Cleanup_None)
     @info "Opening camera"
-    Wrapper.open(camera)
+    PylonWrapper.open(camera)
     @info "Loading node map from $filename"
-    Wrapper.load_features(filename, node_map)
+    PylonWrapper.load_features(filename, node_map)
     @info "Closing camera"
-    Wrapper.close(camera)
+    PylonWrapper.close(camera)
 catch e
     println(e)
 end
 
-Wrapper.pylon_terminate(true)
+PylonWrapper.pylon_terminate(true)

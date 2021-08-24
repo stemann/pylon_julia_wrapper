@@ -1,4 +1,4 @@
-name = "pylon_julia_wrapper"
+name = "PylonWrapper"
 uuid = "36ec52b6-4a64-11e9-0b08-d9a7b99daa16"
 authors = ["IHP Systems R&D <research@ihp.dk>"]
 version = "0.1.0"

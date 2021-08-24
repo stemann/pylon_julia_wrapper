@@ -20,7 +20,7 @@ docker run --rm -it pylon_julia_wrapper
 
 Run the `enumerate_devices.jl` sample - passing through USB device 2 on bus 4:
 ```
-docker run --rm -it --device=/dev/bus/usb/004/002 pylon_julia_wrapper julia --eval 'import Pkg; Pkg.activate("."); include("samples/enumerate_devices.jl")'
+docker run --rm -it --device=/dev/bus/usb/004/002 pylon_julia_wrapper julia --project samples/enumerate_devices.jl
 ```
 
 ## Local
@@ -34,7 +34,7 @@ export PYLON_LIB_PATH=/Library/Frameworks/pylon.framework/Libraries
 ```
 Build:
 ```
-export CxxWrap_PATH=`julia --eval 'import Pkg; Pkg.activate("."); import CxxWrap; println(joinpath(dirname(pathof(CxxWrap)), ".."))'`
+export CxxWrap_PATH=`julia --project --eval 'import CxxWrap; println(joinpath(dirname(pathof(CxxWrap)), ".."))'`
 
 mkdir -p build
 cd build
@@ -49,5 +49,5 @@ export LD_LIBRARY_PATH=/Library/Frameworks/pylon.framework/Libraries
 ```
 Execute sample:
 ```
-julia --eval 'import Pkg; Pkg.activate("."); include("samples/init.jl")'
+julia --project samples/init.jl
 ```
