@@ -25,6 +25,12 @@ using PylonWrapper
         @test PylonWrapper.is_grabbing(camera)
         PylonWrapper.stop_grabbing(camera)
         @test !PylonWrapper.is_grabbing(camera)
+
+        @testset "Re-start grabbing" begin
+            PylonWrapper.start_grabbing(camera, images_to_grab)
+            @test PylonWrapper.is_grabbing(camera)
+            PylonWrapper.stop_grabbing(camera)
+        end
     end
 
     @testset "Grab synchronously" begin
@@ -77,46 +83,56 @@ using PylonWrapper
         grab_result_wait_timeout_ms = UInt32(500)
         grab_result_retrieve_timeout_ms = UInt32(1)
 
-        grabbing_done = Condition()
+        function grab_asynchronously()
+            grabbing_done = Condition()
 
-        terminate_waiter_event = PylonWrapper.create_wait_object_ex(false)
-        initiate_wait_event = PylonWrapper.create_wait_object_ex(false)
-        result_ready_cond = Base.AsyncCondition()
-        grab_result_waiter = PylonWrapper.start_grab_result_waiter(camera,
-            grab_result_wait_timeout_ms,
-            result_ready_cond.handle,
-            terminate_waiter_event,
-            initiate_wait_event)
-        PylonWrapper.start_grabbing(camera, images_to_grab)
+            terminate_waiter_event = PylonWrapper.create_wait_object_ex(false)
+            initiate_wait_event = PylonWrapper.create_wait_object_ex(false)
+            result_ready_cond = Base.AsyncCondition()
 
-        grab_task = @async begin
-            yield()
-            while PylonWrapper.is_grabbing(camera)
-                PylonWrapper.signal(initiate_wait_event)
-                wait(result_ready_cond)
-                grabResult = PylonWrapper.retrieve_result(camera, grab_result_retrieve_timeout_ms)
-                if PylonWrapper.grab_succeeded(grabResult)
-                    grabbed_images += 1
-                    @test PylonWrapper.get_id(grabResult) == grabbed_images
-                else
-                    @error "$(PylonWrapper.get_error_code(grabResult)) $(PylonWrapper.get_error_description(grabResult))"
-                end
-                PylonWrapper.release(grabResult)
+            grab_result_waiter = PylonWrapper.start_grab_result_waiter(camera,
+                grab_result_wait_timeout_ms,
+                result_ready_cond.handle,
+                terminate_waiter_event,
+                initiate_wait_event)
+            PylonWrapper.start_grabbing(camera, images_to_grab)
+
+            grab_task = @async begin
                 yield()
+                while PylonWrapper.is_grabbing(camera)
+                    PylonWrapper.signal(initiate_wait_event)
+                    wait(result_ready_cond)
+                    grabResult = PylonWrapper.retrieve_result(camera, grab_result_retrieve_timeout_ms)
+                    if PylonWrapper.grab_succeeded(grabResult)
+                        grabbed_images += 1
+                        @test PylonWrapper.get_id(grabResult) == grabbed_images
+                    else
+                        @error "$(PylonWrapper.get_error_code(grabResult)) $(PylonWrapper.get_error_description(grabResult))"
+                    end
+                    PylonWrapper.release(grabResult)
+                    yield()
+                end
+                notify(grabbing_done)
             end
-            notify(grabbing_done)
+            yield()
+            @test istaskstarted(grab_task)
+            @test !istaskdone(grab_task)
+            wait(grabbing_done)
+            @test istaskdone(grab_task)
+    
+            PylonWrapper.stop_grab_result_waiter(grab_result_waiter, terminate_waiter_event)
+            PylonWrapper.stop_grabbing(camera)
         end
-        @test !istaskstarted(grab_task)
-        yield()
-        @test istaskstarted(grab_task)
-        @test !istaskdone(grab_task)
-        wait(grabbing_done)
-        @test istaskdone(grab_task)
 
-        PylonWrapper.stop_grab_result_waiter(grab_result_waiter, terminate_waiter_event)
-        PylonWrapper.stop_grabbing(camera)
+        grab_asynchronously()
 
         @test grabbed_images == images_to_grab
+
+        @testset "Re-start grabbing" begin
+            grab_asynchronously()
+
+            @test grabbed_images == 2*images_to_grab
+        end
     end
 
     PylonWrapper.pylon_terminate(true)
