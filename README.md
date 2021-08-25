@@ -9,17 +9,17 @@ BINARYBUILDER_RUNNER=docker BINARYBUILDER_AUTOMATIC_APPLE=true julia --color=yes
 
 ## Docker
 Build the image:
-```
+```sh
 docker build -t pylon_julia_wrapper .
 ```
 
 Run the `init.jl` sample:
-```
+```sh
 docker run --rm -it pylon_julia_wrapper
 ```
 
 Run the `enumerate_devices.jl` sample - passing through USB device 2 on bus 4:
-```
+```sh
 docker run --rm -it --device=/dev/bus/usb/004/002 pylon_julia_wrapper julia --project samples/enumerate_devices.jl
 ```
 
@@ -28,26 +28,24 @@ docker run --rm -it --device=/dev/bus/usb/004/002 pylon_julia_wrapper julia --pr
 ### Building
 
 Set `PYLON_INCLUDE_PATH` and `PYLON_LIB_PATH` to paths for Pylon library. On macOS:
-```
+```sh
 export PYLON_INCLUDE_PATH=/Library/Frameworks/pylon.framework/Headers
 export PYLON_LIB_PATH=/Library/Frameworks/pylon.framework/Libraries
 ```
 Build:
-```
-export CxxWrap_PATH=`julia --project --eval 'import CxxWrap; println(joinpath(dirname(pathof(CxxWrap)), ".."))'`
-
+```sh
 mkdir -p build
 cd build
-cmake ../src -DCMAKE_FIND_ROOT_PATH=${CxxWrap_PATH}/deps/usr/lib/cmake -DPYLON_INCLUDE_PATH=${PYLON_INCLUDE_PATH} -DPYLON_LIB_PATH=${PYLON_LIB_PATH}
-make
+cmake -DCMAKE_BUILD_TYPE=Release ../src
+cmake --build . --config Release
 ```
 
 ### Running samples
 Set dynamic/shared library loading path properly. On macOS:
-```
+```sh
 export LD_LIBRARY_PATH=/Library/Frameworks/pylon.framework/Libraries
 ```
 Execute sample:
-```
+```sh
 julia --project samples/init.jl
 ```
