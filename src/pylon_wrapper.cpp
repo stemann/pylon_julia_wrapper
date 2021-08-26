@@ -168,6 +168,88 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
       return grabResult.Release();
     });
 
+  module.add_bits<ECleanup>("ECleanup");
+  module.set_const("Cleanup_None", Cleanup_None);
+  module.set_const("Cleanup_Delete", Cleanup_Delete);
+
+  module.add_bits<EPixelType>("EPixelType");
+  module.set_const("PixelType_Undefined", PixelType_Undefined);
+  module.set_const("PixelType_Mono1packed", PixelType_Mono1packed);
+  module.set_const("PixelType_Mono2packed", PixelType_Mono2packed);
+  module.set_const("PixelType_Mono4packed", PixelType_Mono4packed);
+  module.set_const("PixelType_Mono8", PixelType_Mono8);
+  module.set_const("PixelType_Mono8signed", PixelType_Mono8signed);
+  module.set_const("PixelType_Mono10", PixelType_Mono10);
+  module.set_const("PixelType_Mono10packed", PixelType_Mono10packed);
+  module.set_const("PixelType_Mono10p", PixelType_Mono10p);
+  module.set_const("PixelType_Mono12", PixelType_Mono12);
+  module.set_const("PixelType_Mono12packed", PixelType_Mono12packed);
+  module.set_const("PixelType_Mono12p", PixelType_Mono12p);
+  module.set_const("PixelType_Mono16", PixelType_Mono16);
+  module.set_const("PixelType_BayerGR8", PixelType_BayerGR8);
+  module.set_const("PixelType_BayerRG8", PixelType_BayerRG8);
+  module.set_const("PixelType_BayerGB8", PixelType_BayerGB8);
+  module.set_const("PixelType_BayerBG8", PixelType_BayerBG8);
+  module.set_const("PixelType_BayerGR10", PixelType_BayerGR10);
+  module.set_const("PixelType_BayerRG10", PixelType_BayerRG10);
+  module.set_const("PixelType_BayerGB10", PixelType_BayerGB10);
+  module.set_const("PixelType_BayerBG10", PixelType_BayerBG10);
+  module.set_const("PixelType_BayerGR12", PixelType_BayerGR12);
+  module.set_const("PixelType_BayerRG12", PixelType_BayerRG12);
+  module.set_const("PixelType_BayerGB12", PixelType_BayerGB12);
+  module.set_const("PixelType_BayerBG12", PixelType_BayerBG12);
+  module.set_const("PixelType_RGB8packed", PixelType_RGB8packed);
+  module.set_const("PixelType_BGR8packed", PixelType_BGR8packed);
+  module.set_const("PixelType_RGBA8packed", PixelType_RGBA8packed);
+  module.set_const("PixelType_BGRA8packed", PixelType_BGRA8packed);
+  module.set_const("PixelType_RGB10packed", PixelType_RGB10packed);
+  module.set_const("PixelType_BGR10packed", PixelType_BGR10packed);
+  module.set_const("PixelType_RGB12packed", PixelType_RGB12packed);
+  module.set_const("PixelType_BGR12packed", PixelType_BGR12packed);
+  module.set_const("PixelType_RGB16packed", PixelType_RGB16packed);
+  module.set_const("PixelType_BGR10V1packed", PixelType_BGR10V1packed);
+  module.set_const("PixelType_BGR10V2packed", PixelType_BGR10V2packed);
+  module.set_const("PixelType_YUV411packed", PixelType_YUV411packed);
+  module.set_const("PixelType_YUV422packed", PixelType_YUV422packed);
+  module.set_const("PixelType_YUV444packed", PixelType_YUV444packed);
+  module.set_const("PixelType_RGB8planar", PixelType_RGB8planar);
+  module.set_const("PixelType_RGB10planar", PixelType_RGB10planar);
+  module.set_const("PixelType_RGB12planar", PixelType_RGB12planar);
+  module.set_const("PixelType_RGB16planar", PixelType_RGB16planar);
+  module.set_const("PixelType_YUV422_YUYV_Packed", PixelType_YUV422_YUYV_Packed);
+  module.set_const("PixelType_BayerGR12Packed", PixelType_BayerGR12Packed);
+  module.set_const("PixelType_BayerRG12Packed", PixelType_BayerRG12Packed);
+  module.set_const("PixelType_BayerGB12Packed", PixelType_BayerGB12Packed);
+  module.set_const("PixelType_BayerBG12Packed", PixelType_BayerBG12Packed);
+  module.set_const("PixelType_BayerGR10p", PixelType_BayerGR10p);
+  module.set_const("PixelType_BayerRG10p", PixelType_BayerRG10p);
+  module.set_const("PixelType_BayerGB10p", PixelType_BayerGB10p);
+  module.set_const("PixelType_BayerBG10p", PixelType_BayerBG10p);
+  module.set_const("PixelType_BayerGR12p", PixelType_BayerGR12p);
+  module.set_const("PixelType_BayerRG12p", PixelType_BayerRG12p);
+  module.set_const("PixelType_BayerGB12p", PixelType_BayerGB12p);
+  module.set_const("PixelType_BayerBG12p", PixelType_BayerBG12p);
+  module.set_const("PixelType_BayerGR16", PixelType_BayerGR16);
+  module.set_const("PixelType_BayerRG16", PixelType_BayerRG16);
+  module.set_const("PixelType_BayerGB16", PixelType_BayerGB16);
+  module.set_const("PixelType_BayerBG16", PixelType_BayerBG16);
+  module.set_const("PixelType_RGB12V1packed", PixelType_RGB12V1packed);
+  module.set_const("PixelType_Double", PixelType_Double);
+
+  module.add_bits<ERegistrationMode>("ERegistrationMode");
+  module.set_const("RegistrationMode_Append", RegistrationMode_Append);
+  module.set_const("RegistrationMode_ReplaceAll", RegistrationMode_ReplaceAll);
+
+  module.add_bits<ETimeoutHandling>("ETimeoutHandling");
+  module.set_const("TimeoutHandling_Return", TimeoutHandling_Return);
+  module.set_const("TimeoutHandling_ThrowException", TimeoutHandling_ThrowException);
+
+  module.add_type<WaitObjectEx>("WaitObjectEx")
+    .method("create_wait_object_ex", &WaitObjectEx::Create)
+    .method("reset", &WaitObjectEx::Reset)
+    .method("signal", &WaitObjectEx::Signal)
+    .method("wait", &WaitObjectEx::Wait);
+
   module.add_type<CInstantCamera>("InstantCamera")
     .constructor(false)
     .constructor<IPylonDevice*>(false)
@@ -279,82 +361,6 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
     })
     .method("length", &DeviceInfoList_t::size);
 
-  module.add_bits<ECleanup>("ECleanup");
-  module.set_const("Cleanup_None", Cleanup_None);
-  module.set_const("Cleanup_Delete", Cleanup_Delete);
-
-  module.add_bits<EPixelType>("EPixelType");
-  module.set_const("PixelType_Undefined", PixelType_Undefined);
-  module.set_const("PixelType_Mono1packed", PixelType_Mono1packed);
-  module.set_const("PixelType_Mono2packed", PixelType_Mono2packed);
-  module.set_const("PixelType_Mono4packed", PixelType_Mono4packed);
-  module.set_const("PixelType_Mono8", PixelType_Mono8);
-  module.set_const("PixelType_Mono8signed", PixelType_Mono8signed);
-  module.set_const("PixelType_Mono10", PixelType_Mono10);
-  module.set_const("PixelType_Mono10packed", PixelType_Mono10packed);
-  module.set_const("PixelType_Mono10p", PixelType_Mono10p);
-  module.set_const("PixelType_Mono12", PixelType_Mono12);
-  module.set_const("PixelType_Mono12packed", PixelType_Mono12packed);
-  module.set_const("PixelType_Mono12p", PixelType_Mono12p);
-  module.set_const("PixelType_Mono16", PixelType_Mono16);
-  module.set_const("PixelType_BayerGR8", PixelType_BayerGR8);
-  module.set_const("PixelType_BayerRG8", PixelType_BayerRG8);
-  module.set_const("PixelType_BayerGB8", PixelType_BayerGB8);
-  module.set_const("PixelType_BayerBG8", PixelType_BayerBG8);
-  module.set_const("PixelType_BayerGR10", PixelType_BayerGR10);
-  module.set_const("PixelType_BayerRG10", PixelType_BayerRG10);
-  module.set_const("PixelType_BayerGB10", PixelType_BayerGB10);
-  module.set_const("PixelType_BayerBG10", PixelType_BayerBG10);
-  module.set_const("PixelType_BayerGR12", PixelType_BayerGR12);
-  module.set_const("PixelType_BayerRG12", PixelType_BayerRG12);
-  module.set_const("PixelType_BayerGB12", PixelType_BayerGB12);
-  module.set_const("PixelType_BayerBG12", PixelType_BayerBG12);
-  module.set_const("PixelType_RGB8packed", PixelType_RGB8packed);
-  module.set_const("PixelType_BGR8packed", PixelType_BGR8packed);
-  module.set_const("PixelType_RGBA8packed", PixelType_RGBA8packed);
-  module.set_const("PixelType_BGRA8packed", PixelType_BGRA8packed);
-  module.set_const("PixelType_RGB10packed", PixelType_RGB10packed);
-  module.set_const("PixelType_BGR10packed", PixelType_BGR10packed);
-  module.set_const("PixelType_RGB12packed", PixelType_RGB12packed);
-  module.set_const("PixelType_BGR12packed", PixelType_BGR12packed);
-  module.set_const("PixelType_RGB16packed", PixelType_RGB16packed);
-  module.set_const("PixelType_BGR10V1packed", PixelType_BGR10V1packed);
-  module.set_const("PixelType_BGR10V2packed", PixelType_BGR10V2packed);
-  module.set_const("PixelType_YUV411packed", PixelType_YUV411packed);
-  module.set_const("PixelType_YUV422packed", PixelType_YUV422packed);
-  module.set_const("PixelType_YUV444packed", PixelType_YUV444packed);
-  module.set_const("PixelType_RGB8planar", PixelType_RGB8planar);
-  module.set_const("PixelType_RGB10planar", PixelType_RGB10planar);
-  module.set_const("PixelType_RGB12planar", PixelType_RGB12planar);
-  module.set_const("PixelType_RGB16planar", PixelType_RGB16planar);
-  module.set_const("PixelType_YUV422_YUYV_Packed", PixelType_YUV422_YUYV_Packed);
-  module.set_const("PixelType_BayerGR12Packed", PixelType_BayerGR12Packed);
-  module.set_const("PixelType_BayerRG12Packed", PixelType_BayerRG12Packed);
-  module.set_const("PixelType_BayerGB12Packed", PixelType_BayerGB12Packed);
-  module.set_const("PixelType_BayerBG12Packed", PixelType_BayerBG12Packed);
-  module.set_const("PixelType_BayerGR10p", PixelType_BayerGR10p);
-  module.set_const("PixelType_BayerRG10p", PixelType_BayerRG10p);
-  module.set_const("PixelType_BayerGB10p", PixelType_BayerGB10p);
-  module.set_const("PixelType_BayerBG10p", PixelType_BayerBG10p);
-  module.set_const("PixelType_BayerGR12p", PixelType_BayerGR12p);
-  module.set_const("PixelType_BayerRG12p", PixelType_BayerRG12p);
-  module.set_const("PixelType_BayerGB12p", PixelType_BayerGB12p);
-  module.set_const("PixelType_BayerBG12p", PixelType_BayerBG12p);
-  module.set_const("PixelType_BayerGR16", PixelType_BayerGR16);
-  module.set_const("PixelType_BayerRG16", PixelType_BayerRG16);
-  module.set_const("PixelType_BayerGB16", PixelType_BayerGB16);
-  module.set_const("PixelType_BayerBG16", PixelType_BayerBG16);
-  module.set_const("PixelType_RGB12V1packed", PixelType_RGB12V1packed);
-  module.set_const("PixelType_Double", PixelType_Double);
-
-  module.add_bits<ERegistrationMode>("ERegistrationMode");
-  module.set_const("RegistrationMode_Append", RegistrationMode_Append);
-  module.set_const("RegistrationMode_ReplaceAll", RegistrationMode_ReplaceAll);
-
-  module.add_bits<ETimeoutHandling>("ETimeoutHandling");
-  module.set_const("TimeoutHandling_Return", TimeoutHandling_Return);
-  module.set_const("TimeoutHandling_ThrowException", TimeoutHandling_ThrowException);
-
   module.add_type<IDevice>("IDevice")
     .method("get_device_info", &IDevice::GetDeviceInfo);
 
@@ -390,12 +396,6 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
       factory.EnumerateDevices(device_list);
       return device_list;
     });
-
-  module.add_type<WaitObjectEx>("WaitObjectEx")
-    .method("create_wait_object_ex", &WaitObjectEx::Create)
-    .method("reset", &WaitObjectEx::Reset)
-    .method("signal", &WaitObjectEx::Signal)
-    .method("wait", &WaitObjectEx::Wait);
 }
 
 namespace jlcxx
