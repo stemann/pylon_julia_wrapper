@@ -53,7 +53,6 @@ namespace pylon_julia_wrapper
   }
 }
 
-
 JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
 {
   using namespace Pylon;
@@ -64,7 +63,10 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
     GetPylonVersion(&major, &minor, &subminor, &build);
     return std::make_tuple(major, minor, subminor, build);
   });
-  module.method("get_pylon_version_string", &GetPylonVersionString);
+  module.method("get_pylon_version_string", []()
+  {
+    return std::string(GetPylonVersionString());
+  });
   module.method("pylon_initialize", &PylonInitialize);
   module.method("pylon_terminate", &PylonTerminate);
   module.method("samples_per_pixel", [](unsigned long pixelType)
@@ -105,15 +107,15 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
   });
 
   module.add_type<CDeviceInfo>("DeviceInfo")
-    .method("get_vendor_name", [](CDeviceInfo& info)
+    .method("get_vendor_name", [](const CDeviceInfo& info)
     {
       return std::string(info.GetVendorName());
     })
-    .method("get_model_name", [](CDeviceInfo& info)
+    .method("get_model_name", [](const CDeviceInfo& info)
     {
       return std::string(info.GetModelName());
     })
-    .method("get_serial_number", [](CDeviceInfo& info)
+    .method("get_serial_number", [](const CDeviceInfo& info)
     {
       return std::string(info.GetSerialNumber());
     });
@@ -168,11 +170,11 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
       return grabResult.Release();
     });
 
-  module.add_bits<ECleanup>("ECleanup");
+  module.add_bits<ECleanup>("ECleanup", jlcxx::julia_type("CppEnum"));
   module.set_const("Cleanup_None", Cleanup_None);
   module.set_const("Cleanup_Delete", Cleanup_Delete);
 
-  module.add_bits<EPixelType>("EPixelType");
+  module.add_bits<EPixelType>("EPixelType", jlcxx::julia_type("CppEnum"));
   module.set_const("PixelType_Undefined", PixelType_Undefined);
   module.set_const("PixelType_Mono1packed", PixelType_Mono1packed);
   module.set_const("PixelType_Mono2packed", PixelType_Mono2packed);
@@ -236,11 +238,11 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
   module.set_const("PixelType_RGB12V1packed", PixelType_RGB12V1packed);
   module.set_const("PixelType_Double", PixelType_Double);
 
-  module.add_bits<ERegistrationMode>("ERegistrationMode");
+  module.add_bits<ERegistrationMode>("ERegistrationMode", jlcxx::julia_type("CppEnum"));
   module.set_const("RegistrationMode_Append", RegistrationMode_Append);
   module.set_const("RegistrationMode_ReplaceAll", RegistrationMode_ReplaceAll);
 
-  module.add_bits<ETimeoutHandling>("ETimeoutHandling");
+  module.add_bits<ETimeoutHandling>("ETimeoutHandling", jlcxx::julia_type("CppEnum"));
   module.set_const("TimeoutHandling_Return", TimeoutHandling_Return);
   module.set_const("TimeoutHandling_ThrowException", TimeoutHandling_ThrowException);
 
@@ -250,22 +252,51 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
     .method("signal", &WaitObjectEx::Signal)
     .method("wait", &WaitObjectEx::Wait);
 
+  module.add_type<std::thread>("StdThread");
+
   module.add_type<CInstantCamera>("InstantCamera")
     .constructor(false)
-    .constructor<IPylonDevice*>(false)
-    .constructor<IPylonDevice*, ECleanup>(false)
-    .method("attach", [](CInstantCamera& camera, IPylonDevice* device)
+    .method("InstantCamera", [](CDeviceInfo& deviceInfo, ECleanup cleanupProcedure)
     {
-      camera.Attach(device);
+      try
+      {
+        auto device = CTlFactory::GetInstance().CreateDevice(deviceInfo);
+        return jlcxx::create<CInstantCamera, false>(device, cleanupProcedure);
+      }
+      catch (const GenericException & e)
+      {
+        throw std::runtime_error(e.GetDescription());
+      }
     })
-    .method("attach", [](CInstantCamera& camera, IPylonDevice* device, ECleanup cleanupProcedure)
+    .method("create_instant_camera_from_first_device", [](CDeviceInfo& deviceInfo, ECleanup cleanupProcedure)
     {
-      camera.Attach(device, cleanupProcedure);
+      try
+      {
+        auto device = CTlFactory::GetInstance().CreateFirstDevice(deviceInfo);
+        return jlcxx::create<CInstantCamera, false>(device, cleanupProcedure);
+      }
+      catch (const GenericException & e)
+      {
+        throw std::runtime_error(e.GetDescription());
+      }
+    })
+    .method("attach", [](CInstantCamera& camera, CDeviceInfo& deviceInfo, ECleanup cleanupProcedure)
+    {
+      try
+      {
+        auto device = CTlFactory::GetInstance().CreateDevice(deviceInfo);
+        camera.Attach(device, cleanupProcedure);
+      }
+      catch (const GenericException & e)
+      {
+        throw std::runtime_error(e.GetDescription());
+      }
     })
     .method("close", [](CInstantCamera& camera)
     {
       camera.Close();
     })
+    .method("get_device_info", &CInstantCamera::GetDeviceInfo)
     .method("get_node_map", [](CInstantCamera& camera)
     {
       try
@@ -334,24 +365,22 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
       WaitObjectEx& terminate_waiter_event,
       WaitObjectEx& initiate_wait_event)
     {
-      auto waiter_thread = new std::thread(pylon_julia_wrapper::grab_result_waiter,
+      return jlcxx::create<std::thread>(pylon_julia_wrapper::grab_result_waiter,
         std::ref(camera), timeout,
         (uv_async_t*)result_ready_handle,
         std::ref(terminate_waiter_event),
         std::ref(initiate_wait_event));
-      return (void*)waiter_thread;
     })
     .method("stop_grabbing", [](CInstantCamera& camera)
     {
       camera.StopGrabbing();
     });
 
-  module.method("stop_grab_result_waiter", [](void* grab_result_waiter,
+  module.method("stop_grab_result_waiter", [](std::thread& grab_result_waiter_thread,
     WaitObjectEx& terminate_waiter_event)
   {
     terminate_waiter_event.Signal();
-    auto grab_result_waiter_thread = (std::thread*)grab_result_waiter;
-    grab_result_waiter_thread->join();
+    grab_result_waiter_thread.join();
   });
 
   module.add_type<DeviceInfoList_t>("DeviceInfoList")
@@ -361,52 +390,10 @@ JLCXX_MODULE define_pylon_wrapper(jlcxx::Module& module)
     })
     .method("length", &DeviceInfoList_t::size);
 
-  module.add_type<IDevice>("IDevice")
-    .method("get_device_info", &IDevice::GetDeviceInfo);
-
-  module.add_type<IPylonDevice>("IPylonDevice", jlcxx::julia_type<IDevice>());
-
-  module.add_type<CTlFactory>("TlFactory")
-    .method("get_transport_layer_factory_instance", &CTlFactory::GetInstance)
-    .method("create_device", [](CTlFactory& factory, CDeviceInfo& device_info)
-    {
-      try
-      {
-        return factory.CreateDevice(device_info);
-      }
-      catch (const GenericException & e)
-      {
-        throw std::runtime_error(e.GetDescription());
-      }
-    })
-    .method("create_first_device", [](CTlFactory& factory) -> IPylonDevice*
-    {
-      try
-      {
-        return factory.CreateFirstDevice();
-      }
-      catch (const GenericException & e)
-      {
-        throw std::runtime_error(e.GetDescription());
-      }
-    })
-    .method("enumerate_devices", [](CTlFactory& factory)
+  module.method("enumerate_devices", []()
     {
       DeviceInfoList_t device_list;
-      factory.EnumerateDevices(device_list);
+      CTlFactory::GetInstance().EnumerateDevices(device_list);
       return device_list;
     });
-}
-
-namespace jlcxx
-{
-  using namespace Pylon;
-
-  // Needed for shared pointer downcasting
-  template<> struct SuperType<IPylonDevice> { typedef IDevice type; };
-
-  template<> struct IsBits<ECleanup> : std::true_type {};
-  template<> struct IsBits<EPixelType> : std::true_type {};
-  template<> struct IsBits<ERegistrationMode> : std::true_type {};
-  template<> struct IsBits<ETimeoutHandling> : std::true_type {};
 }

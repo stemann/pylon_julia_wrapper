@@ -1,20 +1,17 @@
-include(joinpath("..", "src", "PylonWrapper.jl"))
+using PylonWrapper
 
 PylonWrapper.pylon_initialize()
-
-transport_layer_factory = PylonWrapper.get_transport_layer_factory_instance()
 
 const images_to_grab = UInt64(100)
 const grab_result_retrieve_timeout_ms = UInt32(500)
 
 try
-    device = PylonWrapper.create_first_device(transport_layer_factory)
-    device_info = PylonWrapper.get_device_info(device)
+    camera = PylonWrapper.create_instant_camera_from_first_device()
+    device_info = PylonWrapper.get_device_info(camera)
     vendor_name = PylonWrapper.get_vendor_name(device_info)
     model_name = PylonWrapper.get_model_name(device_info)
     serial_number = PylonWrapper.get_serial_number(device_info)
     println("Using device: $(vendor_name) $(model_name) $(serial_number)")
-    camera = PylonWrapper.InstantCamera(device)
     PylonWrapper.start_grabbing(camera, images_to_grab)
     while PylonWrapper.is_grabbing(camera)
         grabResult = PylonWrapper.retrieve_result(camera, grab_result_retrieve_timeout_ms)

@@ -7,10 +7,7 @@ using PylonWrapper
     PylonWrapper.pylon_initialize()
 
     function create_camera()
-        transport_layer_factory = PylonWrapper.get_transport_layer_factory_instance()
-
-        device = PylonWrapper.create_first_device(transport_layer_factory)
-        camera = PylonWrapper.InstantCamera(device)
+        camera = PylonWrapper.create_instant_camera_from_first_device()
         return camera
     end
 
@@ -76,14 +73,15 @@ using PylonWrapper
     end
 
     @testset "Grab N images asynchronously" begin
-        grabbed_images = 0
         images_to_grab = UInt64(3)
-        camera = create_camera()
 
         grab_result_wait_timeout_ms = UInt32(500)
-        grab_result_retrieve_timeout_ms = UInt32(1)
+        grab_result_retrieve_timeout_ms = UInt32(200)
 
         function grab_asynchronously()
+            camera = create_camera()
+            grabbed_images = 0
+
             grabbing_done = Condition()
 
             terminate_waiter_event = PylonWrapper.create_wait_object_ex(false)
@@ -122,16 +120,17 @@ using PylonWrapper
     
             PylonWrapper.stop_grab_result_waiter(grab_result_waiter, terminate_waiter_event)
             PylonWrapper.stop_grabbing(camera)
+            return grabbed_images
         end
 
-        grab_asynchronously()
+        grabbed_images = grab_asynchronously()
 
         @test grabbed_images == images_to_grab
 
         @testset "Re-start grabbing" begin
-            grab_asynchronously()
+            grabbed_images = grab_asynchronously()
 
-            @test grabbed_images == 2*images_to_grab
+            @test grabbed_images == images_to_grab
         end
     end
 
