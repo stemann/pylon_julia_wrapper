@@ -31,6 +31,14 @@ if(NOT DEFINED PYLON_LIB_PATH)
 endif()
 message(STATUS "PYLON_LIB_PATH: ${PYLON_LIB_PATH}")
 
+if(APPLE AND EXISTS ${PYLON_INCLUDE_PATH} AND EXISTS ${PYLON_INCLUDE_PATH}/GenICam)
+  message(STATUS "Copying/linking files from ${PYLON_INCLUDE_PATH} to ${CMAKE_BINARY_DIR}/pylon_include")
+  file(COPY ${PYLON_INCLUDE_PATH}/GenICam/ DESTINATION ${CMAKE_BINARY_DIR}/pylon_include)
+  file(CREATE_LINK ${PYLON_INCLUDE_PATH} ${CMAKE_BINARY_DIR}/pylon_include/pylon SYMBOLIC)
+  set(PYLON_INCLUDE_PATH ${CMAKE_BINARY_DIR}/pylon_include)
+  message(STATUS "PYLON_INCLUDE_PATH: ${PYLON_INCLUDE_PATH}")
+endif()
+
 find_package(JlCxx)
 get_target_property(JlCxx_location JlCxx::cxxwrap_julia LOCATION)
 get_filename_component(JlCxx_location ${JlCxx_location} DIRECTORY)
@@ -41,6 +49,16 @@ message(STATUS "Found JlCxx at ${JlCxx_location}")
 add_library(pylon_julia_wrapper SHARED pylon_wrapper.cpp)
 
 target_link_libraries(pylon_julia_wrapper JlCxx::cxxwrap_julia)
+
+if(APPLE)
+  message(STATUS "Looking for julia uv library in ${Julia_LIBRARY_DIR}")
+  find_library(julia_uv_library NAMES uv PATHS ${Julia_LIBRARY_DIR}/julia)
+  message(STATUS "Found julia uv at ${julia_uv_library}")
+  add_library(julia_uv SHARED IMPORTED)
+  set_property(TARGET julia_uv PROPERTY IMPORTED_LOCATION ${julia_uv_library})
+
+  target_link_libraries(pylon_julia_wrapper julia_uv)
+endif()
 
 target_include_directories(pylon_julia_wrapper PRIVATE "${PYLON_INCLUDE_PATH};${PYLON_INCLUDE_PATH}/GenICam")
 

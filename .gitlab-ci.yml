@@ -13,6 +13,23 @@ build_container:
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY_IMAGE:latest --no-push
 
+build_binaries:1.6:
+  stage: build
+  extends:
+    - .julia:1.6
+  variables:
+    BINARYBUILDER_AUTOMATIC_APPLE: "true"
+    BINARYBUILDER_RUNNER: privileged
+    BINARYBUILDER_USE_SQUASHFS: "true"
+  before_script:
+    - julia --project=binary_builder -e 'using Pkg; Pkg.instantiate()'
+  script:
+    - julia --color=yes --project=binary_builder binary_builder/build_tarballs.jl --verbose
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - products/*.tar.gz
+
 .install_pylon:
   before_script:
     - source src/install_pylon.sh
