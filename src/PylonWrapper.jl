@@ -1,5 +1,5 @@
 module PylonWrapper
-    import Base: iterate, IteratorSize, length
+    import Base: getindex, iterate, IteratorSize, length
 
     using CxxWrap
     @wrapmodule(joinpath(@__DIR__, "..", "build", "lib", "libpylon_julia_wrapper"), :define_pylon_wrapper)
@@ -7,6 +7,14 @@ module PylonWrapper
     function __init__()
         @initcxx
     end
+
+    InstantCamera(device_info::DeviceInfo) = InstantCamera(device_info, Cleanup_Delete)
+
+    create_instant_camera_from_first_device() = create_instant_camera_from_first_device(DeviceInfo())
+
+    create_instant_camera_from_first_device(device_info::DeviceInfo) = create_instant_camera_from_first_device(device_info, Cleanup_Delete)
+
+    attach(camera::InstantCamera, device_info::DeviceInfo) = attach(camera, device_info, Cleanup_Delete)
 
     retrieve_result(camera::InstantCamera, timeoutMs::UInt32) = retrieve_result(camera, timeoutMs, TimeoutHandling_ThrowException)
 

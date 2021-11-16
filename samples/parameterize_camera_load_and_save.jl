@@ -1,20 +1,18 @@
-include(joinpath("..", "src", "PylonWrapper.jl"))
+using PylonWrapper
 
 PylonWrapper.pylon_initialize()
-
-transport_layer_factory = PylonWrapper.get_transport_layer_factory_instance()
 
 filename = tempname() * ".pfs"
 
 try
-    device = PylonWrapper.create_first_device(transport_layer_factory)
-    device_info = PylonWrapper.get_device_info(device)
+    @info "Creating camera instance"
+    camera = PylonWrapper.create_instant_camera_from_first_device()
+    device_info = PylonWrapper.get_device_info(camera)
     vendor_name = PylonWrapper.get_vendor_name(device_info)
     model_name = PylonWrapper.get_model_name(device_info)
     serial_number = PylonWrapper.get_serial_number(device_info)
     @info "Found $(vendor_name) $(model_name) $(serial_number)"
     @info "Creating camera instance"
-    camera = PylonWrapper.InstantCamera(device)
     @info "Opening camera"
     PylonWrapper.open(camera)
     @info "Getting camera node map"
@@ -24,8 +22,6 @@ try
     @info "Closing camera"
     PylonWrapper.close(camera)
 
-    @info "Creating camera instance"
-    camera = PylonWrapper.InstantCamera(device)
     @info "Removing default configuration from instance"
     PylonWrapper.register_configuration(camera, C_NULL, PylonWrapper.RegistrationMode_ReplaceAll, PylonWrapper.Cleanup_None)
     @info "Opening camera"

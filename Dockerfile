@@ -1,4 +1,4 @@
-FROM julia:1.0-stretch
+FROM julia:1.6-buster
 
 COPY src/install_pylon.sh /project/src/install_pylon.sh
 RUN bash /project/src/install_pylon.sh

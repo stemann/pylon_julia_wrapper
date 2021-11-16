@@ -2,7 +2,7 @@ language: julia
 os:
 - linux
 julia:
-- 1.0
+- 1.6
 notifications:
   email: false
 git:
@@ -19,7 +19,7 @@ sudo: required
 
 # Before anything else, get the latest versions of things
 before_script:
-- julia -e 'using Pkg; pkg"add BinaryProvider@0.5.3"; pkg"add BinaryBuilder@0.1.4"; Pkg.build()'
+- julia -e 'using Pkg; pkg"add BinaryBuilder@0.4.1"; Pkg.build()'
 
 script:
 - julia --color=yes build_tarballs.jl
