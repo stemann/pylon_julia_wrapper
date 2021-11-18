@@ -11,7 +11,7 @@ if version == ""
 end
 
 sources = [
-    DirectorySource("src")
+    DirectorySource(joinpath(@__DIR__, "..", "src"))
 ]
 
 julia_version = v"1.6.0"
@@ -33,7 +33,7 @@ if [[ \$target == *"apple-darwin"* ]]; then
   macos_extra_flags="-DCMAKE_CXX_COMPILER_ID=AppleClang -DCMAKE_CXX_COMPILER_VERSION=10.0.0 -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT=11"
 fi
 
-cd \$WORKSPACE/srcdir
+cd \$WORKSPACE
 
 mkdir downloads && cd downloads
 
@@ -44,8 +44,11 @@ if [[ \${target} == *linux* ]]; then
     cd pylon-$pylon_version-x86_64
     tar xfz pylonSDK*.tar.gz
 
-    export PYLON_INCLUDE_PATH=\$WORKSPACE/srcdir/downloads/pylon-$pylon_version-x86_64/pylon5/include
-    export PYLON_LIB_PATH=\$WORKSPACE/srcdir/downloads/pylon-$pylon_version-x86_64/pylon5/lib64
+    export PYLON_INCLUDE_PATH=`pwd`/pylon5/include
+    export PYLON_LIB_PATH=`pwd`/pylon5/lib64
+
+    install_license pylon5/share/pylon/License.html
+    install_license pylon5/share/pylon/pylon_Third-Party_Licenses.html
 elif [[ \${target} == *apple* ]]; then
     curl https://www.baslerweb.com/fp-$basler_web_time_limit/media/downloads/software/pylon_software/pylon-$pylon_macos_version.dmg -O
     echo "$pylon_macos_sha1sum  pylon-$pylon_macos_version.dmg" | sha1sum -c -w
@@ -56,10 +59,14 @@ elif [[ \${target} == *apple* ]]; then
     7z x pylon-$pylon_macos_version.pkg
     gunzip -c pylonsdk.pkg/Payload | bsdcpio -i --no-preserve-owner
 
-    export PYLON_INCLUDE_PATH=\$WORKSPACE/srcdir/downloads/pylon-$pylon_macos_version/Library/Frameworks/pylon.framework/Headers
-    export PYLON_LIB_PATH=\$WORKSPACE/srcdir/downloads/pylon-$pylon_macos_version/Library/Frameworks/pylon.framework/Libraries
+    export PYLON_INCLUDE_PATH=`pwd`/Library/Frameworks/pylon.framework/Headers
+    export PYLON_LIB_PATH=`pwd`/Library/Frameworks/pylon.framework/Libraries
+
+    install_license Library/Frameworks/pylon.framework/Resources/pylon/License.html
+    install_license Library/Frameworks/pylon.framework/Resources/pylon/pylon_Third-Party_Licenses.html
 fi
-cd ../..
+
+cd \$WORKSPACE/srcdir
 
 mkdir build && cd build
 cmake \\
