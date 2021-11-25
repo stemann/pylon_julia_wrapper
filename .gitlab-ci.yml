@@ -3,6 +3,9 @@ include:
     ref: v1.1.0
     file: '/.gitlab-ci_template.yaml'
 
+variables:
+  JULIA_DEPOT_PATH: "$CI_PROJECT_DIR/.julia/"
+
 build_container:
   stage: build
   image:
@@ -13,22 +16,24 @@ build_container:
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY_IMAGE:latest --no-push
 
-build_binaries:1.6:
+build_binaries:
   stage: build
   extends:
     - .julia:1.6
   variables:
     BINARYBUILDER_AUTOMATIC_APPLE: "true"
+    BINARYBUILDER_DEPLOY_REPO: local
     BINARYBUILDER_RUNNER: privileged
     BINARYBUILDER_USE_SQUASHFS: "true"
   before_script:
     - julia --project=binary_builder -e 'using Pkg; Pkg.instantiate()'
   script:
-    - julia --color=yes --project=binary_builder binary_builder/build_tarballs.jl --verbose
+    - julia --color=yes --project=binary_builder binary_builder/build_tarballs.jl --verbose --deploy=${BINARYBUILDER_DEPLOY_REPO}
   artifacts:
     expire_in: 1 week
     paths:
       - products/*.tar.gz
+      - .julia/dev/
 
 .install_pylon:
   before_script:
@@ -60,3 +65,18 @@ test:1.6:
     - .julia:1.6
     - .install_pylon
     - .julia.test
+
+.test_binaries:
+  needs:
+    - build_binaries
+  extends:
+    - .julia.test.basic
+  before_script:
+    - PRODUCTS_DIR=$PWD/products ; sed -E -e "s#https://github.com/local/releases/download/[^/]+#file://$PRODUCTS_DIR#g" -i .julia/dev/*_jll/Artifacts.toml
+    - cd binary_test
+    - julia --project --eval 'using Pkg; Pkg.develop(PackageSpec(path="../.julia/dev/pylon_julia_wrapper_jll"))'
+
+test_binaries:1.6:
+  extends:
+    - .julia:1.6
+    - .test_binaries

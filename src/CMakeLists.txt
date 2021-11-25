@@ -1,6 +1,9 @@
+cmake_minimum_required(VERSION 3.10)
+
+cmake_policy(SET CMP0025 NEW) # Fix for https://docs.binarybuilder.org/stable/troubleshooting/#CMake-complains-%22No-known-for-CXX-compiler%22
+
 project(pylon_julia_wrapper)
 
-cmake_minimum_required(VERSION 2.8.12)
 set(CMAKE_MACOSX_RPATH 1)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 

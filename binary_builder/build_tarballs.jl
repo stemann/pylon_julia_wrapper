@@ -28,11 +28,6 @@ basler_web_time_limit = round(Int, time()) + 24*60*60
 
 # Bash recipe for building across all platforms
 script = """
-# Override compiler ID to silence the horrible "No features found" cmake error
-if [[ \$target == *"apple-darwin"* ]]; then
-  macos_extra_flags="-DCMAKE_CXX_COMPILER_ID=AppleClang -DCMAKE_CXX_COMPILER_VERSION=10.0.0 -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT=11"
-fi
-
 cd \$WORKSPACE
 
 mkdir downloads && cd downloads
@@ -77,7 +72,6 @@ cmake \\
     -DJulia_PREFIX=\$prefix \\
     -DPYLON_INCLUDE_PATH=\${PYLON_INCLUDE_PATH} \\
     -DPYLON_LIB_PATH=\${PYLON_LIB_PATH} \\
-    \$macos_extra_flags \\
     ..
 VERBOSE=ON cmake --build . --config Release --target install
 
@@ -87,9 +81,10 @@ cp -av \${PYLON_LIB_PATH}/ \$WORKSPACE/destdir/lib64
 # These are the platforms we will build for by default, unless further
 # platforms are passed in on the command line
 platforms = [
-    Platform("x86_64", "linux"; cxxstring_abi="cxx03"),
-    Platform("x86_64", "macos")
+    Platform("x86_64", "linux"; julia_version=string(julia_version)),
+    Platform("x86_64", "macos"; julia_version=string(julia_version))
 ]
+platforms = expand_cxxstring_abis(platforms)
 
 # The products that we will ensure are always built
 products = [
@@ -98,11 +93,11 @@ products = [
 
 # Dependencies that must be installed before this package can be built
 dependencies = [
-    Dependency("libcxxwrap_julia_jll"),
-    BuildDependency(PackageSpec(name="libjulia_jll", version=julia_version))
+    BuildDependency(PackageSpec(name="libjulia_jll", version=julia_version)),
+    Dependency("libcxxwrap_julia_jll")
 ]
 
 # Build the tarballs, and possibly a `build.jl` as well.
 build_tarballs(ARGS, name, VersionNumber(version), sources, script, platforms, products, dependencies;
-    preferred_gcc_version = v"9",
-    julia_compat = "^$(julia_version.major).$(julia_version.minor)")
+    preferred_gcc_version = v"8",
+    julia_compat = "$(julia_version.major).$(julia_version.minor)")
