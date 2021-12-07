@@ -68,6 +68,8 @@ fi
 
 cd \$WORKSPACE/srcdir
 
+install_license LICENSE
+
 mkdir build && cd build
 cmake \\
     -DCMAKE_BUILD_TYPE=Release \\
@@ -100,7 +102,12 @@ dependencies = [
     Dependency("libcxxwrap_julia_jll")
 ]
 
+# HACK to get get LICENSE into srcdir
+cp(joinpath(@__DIR__, "..", "LICENSE"), joinpath(@__DIR__, "..", "src", "LICENSE"); force = true)
+
 # Build the tarballs, and possibly a `build.jl` as well.
 build_tarballs(ARGS, name, version, sources, script, platforms, products, dependencies;
     preferred_gcc_version = v"8",
     julia_compat = "$(julia_version.major).$(julia_version.minor)")
+
+rm(joinpath(@__DIR__, "..", "src", "LICENSE"); force = true)
