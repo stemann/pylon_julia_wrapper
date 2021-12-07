@@ -17,13 +17,11 @@ sources = [
 
 julia_version = v"1.6.0"
 
-pylon_version = "5.1.0.12682"
-pylon_sha1sum = "db866bea9d8a8273d8b85cc331fa77b95bae4c83"
+pylon_version = "6.3.0.23157"
+pylon_sha1sum = "2425bb97a27c09b498775435d99ade7379ed8b44"
 
-# pylon_version = "5.2.0.13457"
-
-pylon_macos_version = "5.1.1.13069"
-pylon_macos_sha1sum = "140234a603b5a8b0b9ff0aa725dcaedbdff2908d"
+pylon_macos_version = "6.2.0.21487"
+pylon_macos_sha1sum = "75f990a4a1fe5644faf1ef464aa555b386eb113e"
 
 basler_web_time_limit = round(Int, time()) + 24*60*60
 
@@ -34,28 +32,28 @@ cd \$WORKSPACE
 mkdir downloads && cd downloads
 
 if [[ \${target} == *linux* ]]; then
-    curl https://www.baslerweb.com/fp-$basler_web_time_limit/media/downloads/software/pylon_software/pylon-$pylon_version-x86_64.tar.gz -O
-    echo "$pylon_sha1sum  pylon-$pylon_version-x86_64.tar.gz" | sha1sum -c -w
-    tar xfz pylon-$pylon_version-x86_64.tar.gz
-    cd pylon-$pylon_version-x86_64
-    tar xfz pylonSDK*.tar.gz
+    curl https://www.baslerweb.com/fp-$basler_web_time_limit/media/downloads/software/pylon_software/pylon_$(pylon_version)_x86_64_setup.tar.gz -O
+    echo "$pylon_sha1sum  pylon_$(pylon_version)_x86_64_setup.tar.gz" | sha1sum -c -w
+    tar xfz pylon_$(pylon_version)_x86_64_setup.tar.gz
+    tar xfz pylon_$(pylon_version)_x86_64.tar.gz
 
-    export PYLON_INCLUDE_PATH=`pwd`/pylon5/include
-    export PYLON_LIB_PATH=`pwd`/pylon5/lib64
+    export PYLON_INCLUDE_PATH=`pwd`/include
+    export PYLON_LIB_PATH=`pwd`/lib
 
-    cp -av \${PYLON_LIB_PATH}/ \$WORKSPACE/destdir/lib64
+    rm -rf lib/pylonCXP lib/pylonviewer lib/Qt
+    cp -av lib \$WORKSPACE/destdir/
 
-    install_license pylon5/share/pylon/License.html
-    install_license pylon5/share/pylon/pylon_Third-Party_Licenses.html
+    install_license share/pylon/licenses/License.html
+    install_license share/pylon/licenses/pylon_Third-Party_Licenses.html
 elif [[ \${target} == *apple* ]]; then
     curl https://www.baslerweb.com/fp-$basler_web_time_limit/media/downloads/software/pylon_software/pylon-$pylon_macos_version.dmg -O
     echo "$pylon_macos_sha1sum  pylon-$pylon_macos_version.dmg" | sha1sum -c -w
     apk update && apk add p7zip && apk add libarchive-tools
     7z x pylon-$pylon_macos_version.dmg
-    mv \"pylon 5 Camera Software Suite\" pylon-$(pylon_macos_version)
+    mv \"pylon $pylon_macos_version Camera Software Suite\" pylon-$(pylon_macos_version)
     cd pylon-$(pylon_macos_version)
     7z x pylon-$pylon_macos_version.pkg
-    gunzip -c pylonsdk.pkg/Payload | bsdcpio -i --no-preserve-owner
+    gunzip -c pylon_core_framework.pkg/Payload | bsdcpio -i --no-preserve-owner
 
     cp -av Library/Frameworks/pylon.framework \$WORKSPACE/destdir/lib/
 
@@ -86,10 +84,9 @@ VERBOSE=ON cmake --build . --config Release --target install
 # These are the platforms we will build for by default, unless further
 # platforms are passed in on the command line
 platforms = [
-    Platform("x86_64", "linux"; julia_version=string(julia_version)),
+    Platform("x86_64", "linux"; cxxstring_abi="cxx11", julia_version=string(julia_version)),
     Platform("x86_64", "macos"; julia_version=string(julia_version))
 ]
-platforms = expand_cxxstring_abis(platforms)
 
 # The products that we will ensure are always built
 products = [

@@ -34,6 +34,10 @@ build_binaries:
     paths:
       - products/*.tar.gz
       - .julia/dev/
+  cache:
+    key: $CI_COMMIT_REF_SLUG
+    paths:
+      - .julia/artifacts/
 
 .install_pylon:
   before_script:
