@@ -1,10 +1,11 @@
 # Pylon Julia Wrapper
 
-[![Build Status](https://travis-ci.com/IHPSystems/pylon_julia_wrapper.svg?branch=master)](https://travis-ci.com/IHPSystems/pylon_julia_wrapper)
+[![Build Status](https://github.com/IHPSystems/pylon_julia_wrapper/actions/workflows/CI.yaml/badge.svg?branch=master)](https://github.com/IHPSystems/pylon_julia_wrapper/actions/workflows/CI.yaml?query=branch%3Amaster)
+[![Coverage](https://codecov.io/gh/IHPSystems/pylon_julia_wrapper/branch/master/graph/badge.svg)](https://codecov.io/gh/IHPSystems/pylon_julia_wrapper)
 
 ## BinaryBuilder
 ```
-BINARYBUILDER_RUNNER=docker BINARYBUILDER_AUTOMATIC_APPLE=true julia --color=yes build_tarballs.jl --verbose
+BINARYBUILDER_RUNNER=docker BINARYBUILDER_AUTOMATIC_APPLE=true julia --color=yes --project=binary_builder binary_builder/build_tarballs.jl --verbose --deploy=local
 ```
 
 ## Docker
