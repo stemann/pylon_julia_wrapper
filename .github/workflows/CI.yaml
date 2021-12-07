@@ -1,0 +1,79 @@
+name: CI
+on:
+  push:
+    branches:
+      - master
+    tags: '*'
+  pull_request:
+concurrency:
+  # Skip intermediate builds: always.
+  # Cancel intermediate builds: only if it is a pull request build.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+jobs:
+  build_binaries:
+    name: build_binaries - ${{ github.event_name }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: julia-actions/setup-julia@v1
+        with:
+          version: '1.6'
+          arch: x64
+      - uses: actions/cache@v2
+        env:
+          cache-name: cache-artifacts
+        with:
+          path: ~/.julia/artifacts
+          key: ${{ runner.os }}-build_binaries-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-build_binaries-${{ env.cache-name }}-
+            ${{ runner.os }}-build_binaries-
+            ${{ runner.os }}-
+      - run: julia --project=binary_builder -e 'using Pkg; Pkg.instantiate()'
+      - run: julia --color=yes --project=binary_builder binary_builder/build_tarballs.jl --verbose --deploy=${BINARYBUILDER_DEPLOY_REPO}
+        env:
+          BINARYBUILDER_AUTOMATIC_APPLE: "true"
+          BINARYBUILDER_DEPLOY_REPO: local
+      - uses: actions/upload-artifact@v2
+        with:
+          name: binarybuilder_products
+          path: |
+            products/
+            ~/.julia/dev/
+  test_binaries:
+    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
+    needs: build_binaries
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          - '1.6'
+        os:
+          - ubuntu-latest
+          - macOS-latest
+        arch:
+          - x64
+    steps:
+      - uses: actions/checkout@v2
+      - uses: julia-actions/setup-julia@v1
+        with:
+          version: ${{ matrix.version }}
+          arch: ${{ matrix.arch }}
+      - uses: actions/download-artifact@v2
+        with:
+          name: binarybuilder_products
+          path: '~'
+      - run: |
+          PRODUCTS_DIR=$PWD/products ; sed -E -e "s#https://github.com/local/releases/download/[^/]+#file://$PRODUCTS_DIR#g" -i'bak' ~/.julia/dev/*_jll/Artifacts.toml
+          julia --project=binary_test --eval "using Pkg; Pkg.develop(PackageSpec(path=\"$HOME/.julia/dev/pylon_julia_wrapper_jll\"))"
+      - uses: julia-actions/julia-runtest@v1
+        with:
+          project: binary_test
+      - uses: julia-actions/julia-processcoverage@v1
+        with:
+          directories: binary_test/src
+      - uses: codecov/codecov-action@v2
+        with:
+          files: lcov.info

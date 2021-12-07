@@ -5,9 +5,10 @@ using Pkg
 
 name = "pylon_julia_wrapper"
 
-version = get(ENV, "TRAVIS_TAG", "")
-if version == ""
-    version = "v0.99.0"
+version_string = get(ENV, "GITHUB_REF_NAME", "")
+version = tryparse(VersionNumber, version_string)
+if version === nothing
+    version = v"0.99.0"
 end
 
 sources = [
@@ -42,6 +43,8 @@ if [[ \${target} == *linux* ]]; then
     export PYLON_INCLUDE_PATH=`pwd`/pylon5/include
     export PYLON_LIB_PATH=`pwd`/pylon5/lib64
 
+    cp -av \${PYLON_LIB_PATH}/ \$WORKSPACE/destdir/lib64
+
     install_license pylon5/share/pylon/License.html
     install_license pylon5/share/pylon/pylon_Third-Party_Licenses.html
 elif [[ \${target} == *apple* ]]; then
@@ -54,8 +57,10 @@ elif [[ \${target} == *apple* ]]; then
     7z x pylon-$pylon_macos_version.pkg
     gunzip -c pylonsdk.pkg/Payload | bsdcpio -i --no-preserve-owner
 
-    export PYLON_INCLUDE_PATH=`pwd`/Library/Frameworks/pylon.framework/Headers
-    export PYLON_LIB_PATH=`pwd`/Library/Frameworks/pylon.framework/Libraries
+    cp -av Library/Frameworks/pylon.framework \$WORKSPACE/destdir/lib/
+
+    export PYLON_INCLUDE_PATH=\$WORKSPACE/destdir/lib/pylon.framework/Headers
+    export PYLON_LIB_PATH=\$WORKSPACE/destdir/lib/pylon.framework/Libraries
 
     install_license Library/Frameworks/pylon.framework/Resources/pylon/License.html
     install_license Library/Frameworks/pylon.framework/Resources/pylon/pylon_Third-Party_Licenses.html
@@ -74,8 +79,6 @@ cmake \\
     -DPYLON_LIB_PATH=\${PYLON_LIB_PATH} \\
     ..
 VERBOSE=ON cmake --build . --config Release --target install
-
-cp -av \${PYLON_LIB_PATH}/ \$WORKSPACE/destdir/lib64
 """
 
 # These are the platforms we will build for by default, unless further
@@ -98,6 +101,6 @@ dependencies = [
 ]
 
 # Build the tarballs, and possibly a `build.jl` as well.
-build_tarballs(ARGS, name, VersionNumber(version), sources, script, platforms, products, dependencies;
+build_tarballs(ARGS, name, version, sources, script, platforms, products, dependencies;
     preferred_gcc_version = v"8",
     julia_compat = "$(julia_version.major).$(julia_version.minor)")

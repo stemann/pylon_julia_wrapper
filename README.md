@@ -1,6 +1,7 @@
 # Pylon Julia Wrapper
 
-[![Build Status](https://travis-ci.com/IHPSystems/pylon_julia_wrapper.svg?branch=master)](https://travis-ci.com/IHPSystems/pylon_julia_wrapper)
+[![Build Status](https://github.com/IHPSystems/pylon_julia_wrapper/actions/workflows/CI.yml/badge.svg?branch=master)](https://github.com/IHPSystems/pylon_julia_wrapper/actions/workflows/CI.yml?query=branch%3Amaster)
+[![Coverage](https://codecov.io/gh/IHPSystems/pylon_julia_wrapper/branch/master/graph/badge.svg)](https://codecov.io/gh/IHPSystems/pylon_julia_wrapper)
 
 ## BinaryBuilder
 ```
