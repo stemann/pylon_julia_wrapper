@@ -1,0 +1,31 @@
+name: deploy
+on:
+  push:
+    tags: 'v*'
+jobs:
+  build_binaries:
+    name: build_binaries - ${{ github.event_name }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: julia-actions/setup-julia@v1
+        with:
+          version: '1.6'
+          arch: x64
+      - uses: actions/cache@v2
+        env:
+          cache-name: cache-artifacts
+        with:
+          path: ~/.julia/artifacts
+          key: ${{ runner.os }}-build_binaries-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-build_binaries-${{ env.cache-name }}-
+            ${{ runner.os }}-build_binaries-
+            ${{ runner.os }}-
+      - run: julia --project=binary_builder -e 'using Pkg; Pkg.instantiate()'
+      - run: |
+          git config --global user.name "${{ secrets.GIT_USER_NAME }}"
+          git config --global user.email "${{ secrets.GIT_USER_EMAIL }}"
+      - run: julia --color=yes --project=binary_builder binary_builder/build_tarballs.jl --verbose --deploy=${GITHUB_REPOSITORY}_jll.jl
+        env:
+          BINARYBUILDER_AUTOMATIC_APPLE: "true"
